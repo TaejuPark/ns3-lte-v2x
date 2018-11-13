@@ -827,6 +827,7 @@ protected:
 
 private:
 
+  void DoSlComponentCarrierConfigure (uint32_t slEarfcn, uint8_t slbw);
   /**
    * Configure the component carriers
    *
@@ -850,6 +851,7 @@ private:
    * \return Pointer to the created device
    */
   Ptr<NetDevice> InstallSingleUeDevice (Ptr<Node> n);
+  Ptr<NetDevice> InstallSingleVueDevice (Ptr<Node> n);
 
   /**
    * The actual function to trigger a manual handover.
@@ -880,6 +882,8 @@ private:
    */
   void DoDeActivateDedicatedEpsBearer (Ptr<NetDevice> ueDevice, Ptr<NetDevice> enbDevice, uint8_t bearerId);
 
+  void SetV2VMode (bool b);
+
   /// Function that performs a channel model initialization of all component carriers
   void ChannelModelInitialization (void);
 
@@ -895,6 +899,9 @@ private:
   Ptr<Object>  m_downlinkPathlossModel;
   /// The path loss model used in the uplink channel.
   Ptr<Object> m_uplinkPathlossModel;
+
+  Ptr<SpectrumChannel> m_slChannel;
+  Ptr<Object> m_slPathlossModel;
 
   /// Factory of MAC scheduler object.
   ObjectFactory m_schedulerFactory;
@@ -1012,6 +1019,8 @@ private:
    * communication
    */
   bool m_disableEnbPhy;
+
+  bool m_v2v;
 
 };   // end of `class LteHelper`
 

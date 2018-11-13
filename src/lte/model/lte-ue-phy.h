@@ -599,6 +599,8 @@ private:
   std::vector< std::vector <int> > m_subChannelsForTransmissionQueue; ///< subchannels for transmission queue
 
 
+  bool m_v2v; // V2V mode;
+
   Ptr<LteAmc> m_amc; ///< AMC
 
   /**
@@ -855,6 +857,10 @@ private:
    double srsrpSum;   ///< Sum of S-RSRP sample values in linear unit.
    uint8_t srsrpNum;  ///< Number of S-RSRP samples.
  };
+
+ double MeasureRSSI(Ptr<SpectrumValue> p);
+
+ std::map <uint16_t, double> m_ueRssiMap;
  /**
   * Stores the S-RSRP information of the SyncRefs detected during the scanning process,
   * indexed by the SLSSID of the SyncRef and the offset it uses for transmitting the SLSSs

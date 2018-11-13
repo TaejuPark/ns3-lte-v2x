@@ -160,6 +160,33 @@ ComponentCarrier::SetDlBandwidth (uint8_t bw)
     }
 }
 
+uint8_t
+ComponentCarrier::GetSlBandwidth () const
+{
+  return m_slBandwidth;
+}
+
+void
+ComponentCarrier::SetSlBandwidth (uint8_t bw)
+{
+  NS_LOG_FUNCTION (this << uint16_t (bw));
+  switch (bw)
+    {
+    case 6:
+    case 15:
+    case 25:
+    case 50:
+    case 75:
+    case 100:
+      m_slBandwidth = bw;
+      break;
+
+    default:
+      NS_FATAL_ERROR ("Invalid bandwidth value " << (uint16_t) bw);
+      break;
+    }
+}
+
 uint32_t
 ComponentCarrier::GetDlEarfcn () const
 {
@@ -184,6 +211,19 @@ ComponentCarrier::SetUlEarfcn (uint32_t earfcn)
 {
   NS_LOG_FUNCTION (this << earfcn);
   m_ulEarfcn = earfcn;
+}
+
+uint32_t
+ComponentCarrier::GetSlEarfcn () const
+{
+  return m_slEarfcn;
+}
+
+void
+ComponentCarrier::SetSlEarfcn (uint32_t earfcn)
+{
+  NS_LOG_FUNCTION (this << earfcn);
+  m_slEarfcn = earfcn;
 }
 
 uint32_t

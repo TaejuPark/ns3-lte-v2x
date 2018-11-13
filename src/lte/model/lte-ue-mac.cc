@@ -116,11 +116,11 @@ UeMemberLteUeCmacSapProvider::StartNonContentionBasedRandomAccessProcedure (uint
   m_mac->DoStartNonContentionBasedRandomAccessProcedure (rnti, preambleId, prachMask);
 }
 
- void
- UeMemberLteUeCmacSapProvider::SetRnti (uint16_t rnti)
- {
-   m_mac->DoSetRnti (rnti);
- }
+void
+UeMemberLteUeCmacSapProvider::SetRnti (uint16_t rnti)
+{
+  m_mac->DoSetRnti (rnti);
+}
 
 void
 UeMemberLteUeCmacSapProvider::AddLc (uint8_t lcId, LogicalChannelConfig lcConfig, LteMacSapUser* msu)
@@ -1289,552 +1289,642 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
   m_subframeNo = subframeNo;
   RefreshHarqProcessesPacketBuffer ();
   if ((Simulator::Now () >= m_bsrLast + m_bsrPeriodicity) && (m_freshUlBsr == true))
-    {
-      SendReportBufferStatus ();
-      m_bsrLast = Simulator::Now ();
-      m_freshUlBsr = false;
-    }
+  {
+    SendReportBufferStatus ();
+    m_bsrLast = Simulator::Now ();
+    m_freshUlBsr = false;
+  }
   m_harqProcessId = (m_harqProcessId + 1) % HARQ_PERIOD;
 
   if (m_sidelinkEnabled)
+  {
+    //There is a delay between the MAC scheduling and the transmission so we assume that we are ahead.
+    if (subframeNo + UL_PUSCH_TTIS_DELAY > 10)
     {
-      //There is a delay between the MAC scheduling and the transmission so we assume that we are ahead.
-      if (subframeNo + UL_PUSCH_TTIS_DELAY > 10)
-        {
-          frameNo++;
-          if (frameNo > 1024)
-            {
-              frameNo = 1;
-            }
-          subframeNo = (subframeNo + UL_PUSCH_TTIS_DELAY) % 10;
-        }
-      else
-        {
-          subframeNo = subframeNo + UL_PUSCH_TTIS_DELAY;
-        }
-
-      NS_LOG_INFO ("Adjusted Frame no. " << frameNo << " Subframe no. " << subframeNo);
-
-      //Sidelink Discovery
-      if (m_discTxApps.size () > 0)
-        {
-          if (frameNo == m_discTxPool.m_nextDiscPeriod.frameNo && subframeNo == m_discTxPool.m_nextDiscPeriod.subframeNo)
-            {
-              //define periods and frames
-              m_discTxPool.m_currentDiscPeriod = m_discTxPool.m_nextDiscPeriod;
-              m_discTxPool.m_nextDiscPeriod = m_discTxPool.m_pool->GetNextDiscPeriod (frameNo, subframeNo);
-              m_discTxPool.m_nextDiscPeriod.frameNo++;
-              m_discTxPool.m_nextDiscPeriod.subframeNo++;
-              NS_LOG_INFO ("Starting new discovery period " << ". Next period at " << m_discTxPool.m_nextDiscPeriod.frameNo << "/"
-                                                                          << m_discTxPool.m_nextDiscPeriod.subframeNo);
-              NS_ABORT_MSG_IF (m_discTxPool.m_nextDiscPeriod.frameNo > 1024 || m_discTxPool.m_nextDiscPeriod.subframeNo > 10,
-                               "Invalid frame or subframe number");
-
-              if (m_discTxPool.m_pool->GetSchedulingType () == SidelinkDiscResourcePool::UE_SELECTED)
-                {
-                  //use txProbability
-                  DiscGrant grant;
-                  double p1 = m_p1UniformVariable->GetValue (0, 1);
-                  double txProbability = m_discTxPool.m_pool->GetTxProbability ();       //calculate txProbability
-                  NS_LOG_DEBUG ("txProbability = " << txProbability << " % ");
-                  if (p1 <= txProbability / 100.0)
-                    {
-                      grant.m_resPsdch = m_resUniformVariable->GetInteger (0, m_discTxPool.m_npsdch - 1);
-                      grant.m_rnti = m_rnti;
-                      m_discTxPool.m_nextGrant = grant;
-                      m_discTxPool.m_grantReceived = true;
-                      NS_LOG_INFO ("UE selected grant: resource =" << (uint16_t) grant.m_resPsdch << "/" << m_discTxPool.m_npsdch);
-                    }
-                }
-              else   //scheduled
-                {
-                  //TODO
-                  //use defined grant : SL-TF-IndexPair
-                }
-
-              //if we received a grant
-              if (m_discTxPool.m_grantReceived)
-                {
-                  m_discTxPool.m_currentGrant = m_discTxPool.m_nextGrant;
-                  NS_LOG_INFO ("Discovery grant received resource " << (uint32_t) m_discTxPool.m_currentGrant.m_resPsdch);
-
-                  SidelinkDiscResourcePool::SubframeInfo tmp;
-                  tmp.frameNo = m_discTxPool.m_currentDiscPeriod.frameNo - 1;
-                  tmp.subframeNo = m_discTxPool.m_currentDiscPeriod.subframeNo - 1;
-
-                  m_discTxPool.m_psdchTx = m_discTxPool.m_pool->GetPsdchTransmissions (m_discTxPool.m_currentGrant.m_resPsdch);
-
-                  for (std::list<SidelinkDiscResourcePool::SidelinkTransmissionInfo>::iterator txIt = m_discTxPool.m_psdchTx.begin ();
-                       txIt != m_discTxPool.m_psdchTx.end (); txIt++)
-                    {
-                      txIt->subframe = txIt->subframe + tmp;
-                      //adjust for index starting at 1
-                      txIt->subframe.frameNo++;
-                      txIt->subframe.subframeNo++;
-                      NS_LOG_INFO ("PSDCH: Subframe " << txIt->subframe.frameNo << "/" << txIt->subframe.subframeNo
-                                                      << ": rbStart=" << (uint32_t) txIt->rbStart << ", rbLen=" << (uint32_t) txIt->nbRb);
-                      NS_ABORT_MSG_IF (txIt->subframe.frameNo > 1024 || txIt->subframe.subframeNo > 10,
-                                       "Invalid frame or subframe number");
-                      //Inform PHY: find a way to inform the PHY layer of the resources
-                      m_uePhySapProvider->SetDiscGrantInfo (m_discTxPool.m_currentGrant.m_resPsdch);
-                      //clear the grant
-                      m_discTxPool.m_grantReceived = false;
-                    }
-                }
-            }
-        }
-
-      std::list<SidelinkDiscResourcePool::SidelinkTransmissionInfo>::iterator allocIt;
-      //check if we need to transmit PSDCH
-      allocIt = m_discTxPool.m_psdchTx.begin ();
-      if (allocIt != m_discTxPool.m_psdchTx.end () && (*allocIt).subframe.frameNo == frameNo && (*allocIt).subframe.subframeNo == subframeNo)
-        {
-          NS_LOG_INFO ("PSDCH transmission");
-          for (std::list<uint32_t>::iterator txApp = m_discTxApps.begin (); txApp != m_discTxApps.end (); ++txApp)
-            {
-              //Create Discovery message for each discovery application announcing
-              SlDiscMsg discMsg;
-              discMsg.m_rnti = m_rnti;
-              discMsg.m_resPsdch = m_discTxPool.m_currentGrant.m_resPsdch;
-
-              discMsg.m_proSeAppCode =  (std::bitset <184>) * txApp;
-
-              Ptr<SlDiscMessage> msg = Create<SlDiscMessage> ();
-              msg->SetSlDiscMessage (discMsg);
-              NS_LOG_INFO ("discovery message sent by " << m_rnti << ", proSeAppCode = " << *txApp);
-              m_discoveryAnnouncementTrace (m_rnti, *txApp);
-              m_uePhySapProvider->SendLteControlMessage (msg);
-            }
-          m_discTxPool.m_psdchTx.erase (allocIt);
-        }
-
-      //Sidelink Communication
-      if ((Simulator::Now () >= m_slBsrLast + m_slBsrPeriodicity) && (m_freshSlBsr == true))
-        {
-          SendSidelinkReportBufferStatus ();
-          m_slBsrLast = Simulator::Now ();
-          m_freshSlBsr = false;
-        }
-      std::map <uint32_t, PoolInfo>::iterator poolIt;
-      for (poolIt = m_sidelinkTxPoolsMap.begin (); poolIt != m_sidelinkTxPoolsMap.end (); poolIt++)
-        {
-          //Check if this is a new SC period
-          if (frameNo == poolIt->second.m_nextScPeriod.frameNo && subframeNo == poolIt->second.m_nextScPeriod.subframeNo)
-            {
-              poolIt->second.m_currentScPeriod = poolIt->second.m_nextScPeriod;
-              poolIt->second.m_nextScPeriod = poolIt->second.m_pool->GetNextScPeriod (frameNo, subframeNo);
-              //adjust because scheduler starts with frame/subframe = 1
-              poolIt->second.m_nextScPeriod.frameNo++;
-              poolIt->second.m_nextScPeriod.subframeNo++;
-              NS_LOG_INFO ("Starting new SC period for pool of group " << poolIt->first << ". Next period at "
-                                                                       << poolIt->second.m_nextScPeriod.frameNo << "/" << poolIt->second.m_nextScPeriod.subframeNo);
-              NS_ABORT_MSG_IF (poolIt->second.m_nextScPeriod.frameNo > 1024 || poolIt->second.m_nextScPeriod.subframeNo > 10,
-                               "Invalid frame or subframe number");
-
-              Ptr<PacketBurst> emptyPb = CreateObject <PacketBurst> ();
-              poolIt->second.m_miSlHarqProcessPacket = emptyPb;
-
-              if (poolIt->second.m_pool->GetSchedulingType () == SidelinkCommResourcePool::UE_SELECTED)
-                {
-                  //If m_slHasDataToTx is False here (at the beginning of the period), it means
-                  //that no transmissions in the PSSCH occurred in the previous SC period.
-                  //Notify the RRC for stopping SLSS transmissions if appropriate
-
-                  if (!m_slHasDataToTx)
-                    {
-                      m_cmacSapUser->NotifyMacHasNoSlDataToSend ();
-                    }
-                  //Make m_slHasDataToTx = false here (beginning of the period) to detect if transmissions
-                  //in the PSSCH are performed in this period
-                  m_slHasDataToTx = false;
-
-                  //get the BSR for this pool
-                  //if we have data in the queue
-                  //find the BSR for that pool (will also give the SidleinkLcIdentifier)
-                  std::map <SidelinkLcIdentifier, LteMacSapProvider::ReportBufferStatusParameters>::iterator itBsr;
-                  for (itBsr = m_slBsrReceived.begin ();  itBsr != m_slBsrReceived.end (); itBsr++)
-                    {
-                      if (itBsr->first.dstL2Id == poolIt->first)
-                        {
-                          //this is the BSR for the pool
-                          NS_LOG_DEBUG ("Found the BSR. Tx Queue size = "<<(*itBsr).second.txQueueSize);
-                          break;
-                        }
-                    }
-                  if (itBsr == m_slBsrReceived.end ()
-                      || ( (*itBsr).second.txQueueSize == 0
-                      && (*itBsr).second.retxQueueSize == 0
-                      && (*itBsr).second.statusPduSize == 0 ))
-                    {
-                      NS_LOG_INFO ("No BSR received. Assume no data to transfer");
-                    }
-                  else
-                    {
-                      //we need to pick a random resource from the pool
-                      NS_LOG_DEBUG ("SL BSR size =" << m_slBsrReceived.size ());
-                      SidelinkGrant grant;
-                      //in order to pick a resource that is valid, we compute the number of sub-channels
-                      //on the PSSCH
-                      uint16_t nbTxOpt = poolIt->second.m_npscch;
-                      //Randomly selected Resource in PSCCH.
-                      grant.m_resPscch = m_ueSelectedUniformVariable->GetInteger (0, nbTxOpt - 1);
-                      grant.m_tpc = 0;
-                      std::vector <uint8_t> validRbStarts = poolIt->second.m_pool->GetValidRBstart (m_slGrantSize);
-                      NS_ABORT_MSG_IF (validRbStarts.size () == 0, "UE_MAC: No resources available for configured grant size!");
-                      grant.m_rbStart = validRbStarts [m_ueSelectedUniformVariable->GetInteger (0, validRbStarts.size () - 1)];
-                      grant.m_hoppingInfo = poolIt->second.m_pool->GetDataHoppingConfig ().hoppingInfo;
-                      if (grant.m_hoppingInfo < 4)
-                        {
-                          NS_LOG_DEBUG("Hopping enabled");
-                          grant.m_hopping = 1; //Hopping is enabled
-                        }
-                      else
-                        {
-                          NS_LOG_DEBUG("Hopping disabled");
-                          grant.m_hopping = 0; //Hopping is disabled
-                        }
-
-                      switch (m_slKtrp)
-                        {
-                        case 1:
-                          grant.m_iTrp = m_ueSelectedUniformVariable->GetInteger (0, 7);
-                          break;
-                        case 2:
-                          grant.m_iTrp = m_ueSelectedUniformVariable->GetInteger (8, 35);
-                          break;
-                        case 4:
-                          grant.m_iTrp = m_ueSelectedUniformVariable->GetInteger (36, 105);
-                          break;
-                        case 8:
-                          grant.m_iTrp = 106;
-                          break;
-                        default:
-                          NS_FATAL_ERROR ("Invalid KTRP value " << (uint16_t) m_slKtrp << ". Supported values: [1, 2, 4, 8]");
-                        }
-
-                      if (this->m_useSetTrpIndex == true)
-                        {
-                          grant.m_iTrp = this->m_setTrpIndex;
-                        }
-                      grant.m_rbLen = m_slGrantSize;
-                      grant.m_mcs = m_slGrantMcs;
-                      grant.m_tbSize = 0; //computed later
-                      poolIt->second.m_nextGrant = grant;
-                      poolIt->second.m_grantReceived = true;
-                      NS_LOG_INFO ("UE selected grant: resource=" << (uint16_t) grant.m_resPscch << "/"
-                                                                  << poolIt->second.m_npscch << ", rbStart=" << (uint16_t) grant.m_rbStart
-                                                                  << ", rbLen=" << (uint16_t) grant.m_rbLen << ", mcs=" << (uint16_t) grant.m_mcs
-                                                                  << ",itrp=" << (uint16_t) grant.m_iTrp);
-                    }
-                } // end if (UE_SELECTED)
-
-              //if we received a grant, compute the transmission opportunities for PSCCH and PSSCH
-              if (poolIt->second.m_grantReceived)
-                {
-                  if (poolIt->second.m_pool->GetSchedulingType () == SidelinkCommResourcePool::SCHEDULED)
-                    {
-                      std::map <SidelinkLcIdentifier, LteMacSapProvider::ReportBufferStatusParameters>::iterator itBsr;
-                      for (itBsr = m_slBsrReceived.begin ();  itBsr != m_slBsrReceived.end (); itBsr++)
-                        {
-                          if (itBsr->first.dstL2Id == poolIt->first)
-                            {
-                              //this is the BSR for the pool
-                              NS_LOG_DEBUG ("Found the BSR. Tx Queue size = "<<(*itBsr).second.txQueueSize);
-                              break;
-                            }
-                        }
-
-                      if (itBsr == m_slBsrReceived.end ()
-                          || ( (*itBsr).second.txQueueSize == 0
-                          && (*itBsr).second.retxQueueSize == 0
-                          && (*itBsr).second.statusPduSize == 0))
-                        {
-                          NS_LOG_INFO ("We receive the grant from the eNB but the transmission queue size is zero."
-                                                                              " Assume no data to transfer for now");
-                          continue;
-                        }
-                    }
-
-                  //make the grant our current grant
-                  poolIt->second.m_currentGrant = poolIt->second.m_nextGrant;
-                  NS_LOG_INFO ("Sidelink grant received resource " << (uint32_t) poolIt->second.m_currentGrant.m_resPscch);
-                  SidelinkCommResourcePool::SubframeInfo subFrameInfo;
-                  subFrameInfo.frameNo = poolIt->second.m_currentScPeriod.frameNo - 1;
-                  subFrameInfo.subframeNo = poolIt->second.m_currentScPeriod.subframeNo - 1;
-
-                  // Collect statistics for SL UE mac scheduling trace
-                  SlUeMacStatParameters stats_params;
-                  stats_params.m_frameNo = subFrameInfo.frameNo + 1;
-                  stats_params.m_subframeNo = subFrameInfo.subframeNo + 1;
-                  stats_params.m_pscchRi = poolIt->second.m_currentGrant.m_resPscch;
-                  stats_params.m_cellId = 0;
-                  stats_params.m_imsi = 0;
-                  stats_params.m_pscchFrame1 = 0;
-                  stats_params.m_pscchSubframe1 = 0;
-                  stats_params.m_pscchFrame2 = 0;
-                  stats_params.m_pscchSubframe2 = 0;
-                  stats_params.m_psschFrame = 0;
-                  stats_params.m_psschSubframeStart = 0;
-
-                  poolIt->second.m_pscchTx = poolIt->second.m_pool->GetPscchTransmissions (poolIt->second.m_currentGrant.m_resPscch);
-                  uint16_t tx_counter = 1;
-                  for (std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator txIt = poolIt->second.m_pscchTx.begin ();
-                       txIt != poolIt->second.m_pscchTx.end (); txIt++)
-                    {
-                      txIt->subframe = txIt->subframe + subFrameInfo;
-                      //adjust for index starting at 1
-                      txIt->subframe.frameNo++;
-                      txIt->subframe.subframeNo++;
-                      NS_LOG_INFO ("PSCCH: Subframe " << txIt->subframe.frameNo << "/" << txIt->subframe.subframeNo
-                                                      << ": rbStart=" << (uint32_t) txIt->rbStart << ", rbLen=" << (uint32_t) txIt->nbRb);
-                      NS_ABORT_MSG_IF (txIt->subframe.frameNo > 1024 || txIt->subframe.subframeNo > 10,
-                                       "Invalid frame or subframe number");
-                      switch (tx_counter)
-                        {
-                        case 1:
-                          stats_params.m_pscchFrame1 = txIt->subframe.frameNo;
-                          stats_params.m_pscchSubframe1 = txIt->subframe.subframeNo;
-                          break;
-                        case 2:
-                          stats_params.m_pscchFrame2 = txIt->subframe.frameNo;
-                          stats_params.m_pscchSubframe2 = txIt->subframe.subframeNo;
-                          break;
-                        default:
-                          NS_FATAL_ERROR ("PSCCH ONLY SUPPORTS 2 TRANSMISSIONS PER UE GRANT!");
-                        }
-                      tx_counter++;
-                    }
-                  poolIt->second.m_psschTx = poolIt->second.m_pool->GetPsschTransmissions (subFrameInfo, poolIt->second.m_currentGrant.m_iTrp, poolIt->second.m_currentGrant.m_rbStart, poolIt->second.m_currentGrant.m_rbLen);
-
-                  //adjust PSSCH frame to next period
-                  for (std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator txIt = poolIt->second.m_psschTx.begin ();
-                       txIt != poolIt->second.m_psschTx.end (); txIt++)
-                    {
-                      //adjust for index starting at 1
-                      txIt->subframe.frameNo++;
-                      txIt->subframe.subframeNo++;
-                      NS_LOG_INFO ("PSSCH: Subframe " << txIt->subframe.frameNo << "/"
-                                                      << txIt->subframe.subframeNo << ": rbStart=" << (uint32_t) txIt->rbStart
-                                                      << ", rbLen=" << (uint32_t) txIt->nbRb);
-                      NS_ABORT_MSG_IF (txIt->subframe.frameNo > 1024 || txIt->subframe.subframeNo > 10,
-                                                             "Invalid frame or subframe number");
-                    }
-
-                  //compute the TB size
-                  poolIt->second.m_currentGrant.m_tbSize = m_amc->GetUlTbSizeFromMcs (poolIt->second.m_currentGrant.m_mcs, poolIt->second.m_currentGrant.m_rbLen) / 8;
-                  NS_LOG_INFO ("Sidelink Tb size = " << poolIt->second.m_currentGrant.m_tbSize << " bytes (mcs=" << (uint32_t) poolIt->second.m_currentGrant.m_mcs << ")");
-
-                  stats_params.m_rnti = m_rnti;
-                  stats_params.m_mcs = poolIt->second.m_currentGrant.m_mcs;
-                  stats_params.m_tbSize = poolIt->second.m_currentGrant.m_tbSize;
-                  stats_params.m_psschTxStartRB = poolIt->second.m_currentGrant.m_rbStart;
-                  stats_params.m_psschTxLengthRB = poolIt->second.m_currentGrant.m_rbLen;
-                  stats_params.m_psschItrp = poolIt->second.m_currentGrant.m_iTrp;
-                  stats_params.m_timestamp = Simulator::Now ().GetMilliSeconds ();
-
-                  m_slPscchScheduling (stats_params); //Trace
-
-                  //clear the grant
-                  poolIt->second.m_grantReceived = false;
-                } //end of if (poolIt->second.m_grantReceived)
-            }
-          else
-            {
-              NS_LOG_DEBUG ("Sidelink Control period not started yet");
-              NS_LOG_DEBUG("current frame number = " << frameNo <<" Next SC period frame number = "<<poolIt->second.m_nextScPeriod.frameNo);
-              NS_LOG_DEBUG("current subframe number = " << subframeNo <<" Next SC period subframe number = "<<poolIt->second.m_nextScPeriod.subframeNo);
-            }
-
-          std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator allocIt;
-          //check if we need to transmit PSCCH
-          allocIt = poolIt->second.m_pscchTx.begin ();
-          if (allocIt != poolIt->second.m_pscchTx.end () && (*allocIt).subframe.frameNo == frameNo && (*allocIt).subframe.subframeNo == subframeNo)
-            {
-              //transmission of PSCCH, no need for HARQ
-              if (poolIt->second.m_pscchTx.size () == 2)
-                {
-                  NS_LOG_INFO ("First PSCCH transmission");
-                }
-              else
-                {
-                  NS_LOG_INFO ("Second PSCCH transmission");
-                }
-              //create SCI message
-              SciListElement_s sci;
-              sci.m_rnti = m_rnti;
-              sci.m_mcs = poolIt->second.m_currentGrant.m_mcs;
-              sci.m_tbSize = poolIt->second.m_currentGrant.m_tbSize;
-              sci.m_resPscch = poolIt->second.m_currentGrant.m_resPscch;
-              sci.m_rbLen = poolIt->second.m_currentGrant.m_rbLen;
-              sci.m_rbStart = poolIt->second.m_currentGrant.m_rbStart;
-              sci.m_trp = poolIt->second.m_currentGrant.m_iTrp;
-              sci.m_hopping = poolIt->second.m_currentGrant.m_hopping;
-              sci.m_hoppingInfo = poolIt->second.m_currentGrant.m_hoppingInfo;
-              sci.m_groupDstId = (poolIt->first & 0xFF);
-
-              Ptr<SciLteControlMessage> msg = Create<SciLteControlMessage> ();
-              msg->SetSci (sci);
-              m_uePhySapProvider->SendLteControlMessage (msg);
-
-              poolIt->second.m_pscchTx.erase (allocIt);
-            }
-
-          //check if we need to transmit PSSCH
-          allocIt = poolIt->second.m_psschTx.begin ();
-          if (allocIt != poolIt->second.m_psschTx.end () && (*allocIt).subframe.frameNo == frameNo && (*allocIt).subframe.subframeNo == subframeNo)
-            {
-              // Collect statistics for SL share channel UE MAC scheduling trace
-              SlUeMacStatParameters stats_sch_params;
-              stats_sch_params.m_frameNo = poolIt->second.m_currentScPeriod.frameNo;
-              stats_sch_params.m_subframeNo = poolIt->second.m_currentScPeriod.subframeNo;
-              stats_sch_params.m_psschFrame = frameNo;
-              stats_sch_params.m_psschSubframe = subframeNo;
-              stats_sch_params.m_cellId = 0;
-              stats_sch_params.m_imsi = 0;
-              stats_sch_params.m_pscchRi = 0;
-              stats_sch_params.m_pscchFrame1 = 0;
-              stats_sch_params.m_pscchSubframe1 = 0;
-              stats_sch_params.m_pscchFrame2 = 0;
-              stats_sch_params.m_pscchSubframe2 = 0;
-              stats_sch_params.m_psschItrp = 0;
-              stats_sch_params.m_psschFrameStart = 0;
-              stats_sch_params.m_psschSubframeStart = 0;
-
-              //Get first subframe of PSSCH
-              SidelinkCommResourcePool::SubframeInfo currScPeriod;
-              currScPeriod.frameNo = poolIt->second.m_currentScPeriod.frameNo - 1;
-              currScPeriod.subframeNo = poolIt->second.m_currentScPeriod.subframeNo - 1;
-              std::vector<uint32_t> psschSFVector = poolIt->second.m_pool->GetAllPsschSubframes ();
-              uint32_t psschStartSubframe = 10 * (currScPeriod.frameNo % 1024) + currScPeriod.subframeNo % 10 + psschSFVector[0];
-              stats_sch_params.m_psschFrameStart = psschStartSubframe / 10 + 1;
-              stats_sch_params.m_psschSubframeStart = psschStartSubframe % 10 + 1;
-
-              stats_sch_params.m_rnti = m_rnti;
-              stats_sch_params.m_mcs = poolIt->second.m_currentGrant.m_mcs;
-              stats_sch_params.m_tbSize = poolIt->second.m_currentGrant.m_tbSize;
-              stats_sch_params.m_psschTxStartRB = (*allocIt).rbStart;
-              stats_sch_params.m_psschTxLengthRB = (*allocIt).nbRb;
-              stats_sch_params.m_timestamp = Simulator::Now ().GetMilliSeconds ();
-
-              m_slPsschScheduling (stats_sch_params); //Trace
-
-              if (poolIt->second.m_psschTx.size () % 4 == 0)
-                {
-                  NS_LOG_INFO ("New PSSCH transmission");
-                  Ptr<PacketBurst> emptyPb = CreateObject <PacketBurst> ();
-                  poolIt->second.m_miSlHarqProcessPacket = emptyPb;
-
-                  //get the BSR for this pool
-                  //if we have data in the queue
-                  //find the BSR for that pool (will also give the SidleinkLcIdentifier)
-
-                  std::map <SidelinkLcIdentifier, LteMacSapProvider::ReportBufferStatusParameters>::iterator itBsr;
-                  for (itBsr = m_slBsrReceived.begin ();  itBsr != m_slBsrReceived.end (); itBsr++)
-                    {
-                      if (itBsr->first.dstL2Id == poolIt->first)
-                        {
-                          //this is the BSR for the pool
-                          std::map <SidelinkLcIdentifier, LcInfo>::iterator it = m_slLcInfoMap.find (itBsr->first);
-                          //for Sidelink we should never have retxQueueSize since it is unacknowledged mode
-                          //we still keep the process similar to uplink to be more generic (and maybe handle
-                          //future modifications)
-                          if ( ((*itBsr).second.statusPduSize > 0)
-                               || ((*itBsr).second.retxQueueSize > 0)
-                               || ((*itBsr).second.txQueueSize > 0))
-                            {
-                              //We have data to send in the PSSCH, notify the RRC to start/continue sending SLSS if appropriate
-                              m_slHasDataToTx = true;
-                              m_cmacSapUser->NotifyMacHasSlDataToSend ();
-
-                              NS_ASSERT ((*itBsr).second.statusPduSize == 0 && (*itBsr).second.retxQueueSize == 0);
-                              //similar code as uplink transmission
-                              uint32_t bytesForThisLc = poolIt->second.m_currentGrant.m_tbSize;
-                              NS_LOG_LOGIC ("RNTI " << m_rnti << " Sidelink Tx " << bytesForThisLc << " bytes to LC "
-                                                    << (uint32_t)(*itBsr).first.lcId << " statusQueue " << (*itBsr).second.statusPduSize
-                                                    << " retxQueue" << (*itBsr).second.retxQueueSize << " txQueue"
-                                                    <<  (*itBsr).second.txQueueSize);
-                              if (((*itBsr).second.statusPduSize > 0) && (bytesForThisLc > (*itBsr).second.statusPduSize))
-                                {
-                                  (*it).second.macSapUser->NotifyTxOpportunity ((*itBsr).second.statusPduSize, 0, 0, m_componentCarrierId, m_rnti, (*itBsr).first.lcId);
-                                  bytesForThisLc -= (*itBsr).second.statusPduSize; //decrement size available for data
-                                  NS_LOG_DEBUG ("Serve STATUS PDU" << (*itBsr).second.statusPduSize);
-                                  (*itBsr).second.statusPduSize = 0;
-                                }
-                              else
-                                {
-                                  if ((*itBsr).second.statusPduSize > bytesForThisLc)
-                                    {
-                                      NS_FATAL_ERROR ("Insufficient Tx Opportunity for sending a status message");
-                                    }
-                                }
-                              // 7 is the min TxOpportunity useful for Rlc
-                              if ((bytesForThisLc > 7)
-                                  && (((*itBsr).second.retxQueueSize > 0)
-                                      || ((*itBsr).second.txQueueSize > 0)))
-                                {
-                                  if ((*itBsr).second.retxQueueSize > 0)
-                                    {
-                                      NS_LOG_DEBUG ("Serve retx DATA, bytes " << bytesForThisLc);
-                                      (*it).second.macSapUser->NotifyTxOpportunity (bytesForThisLc, 0, 0, m_componentCarrierId, m_rnti, (*itBsr).first.lcId);
-                                      if ((*itBsr).second.retxQueueSize >= bytesForThisLc)
-                                        {
-                                          (*itBsr).second.retxQueueSize -= bytesForThisLc;
-                                        }
-                                      else
-                                        {
-                                          (*itBsr).second.retxQueueSize = 0;
-                                        }
-                                    }
-                                  else if ((*itBsr).second.txQueueSize > 0)
-                                    {
-                                      // minimum RLC overhead due to header
-                                      uint32_t rlcOverhead = 2;
-                                      NS_LOG_DEBUG ("Serve tx DATA, bytes " << bytesForThisLc << ", RLC overhead " << rlcOverhead);
-                                      (*it).second.macSapUser->NotifyTxOpportunity (bytesForThisLc, 0, 0, m_componentCarrierId, m_rnti, (*itBsr).first.lcId);
-                                      if ((*itBsr).second.txQueueSize >= bytesForThisLc - rlcOverhead)
-                                        {
-                                          (*itBsr).second.txQueueSize -= bytesForThisLc - rlcOverhead;
-                                        }
-                                      else
-                                        {
-                                          (*itBsr).second.txQueueSize = 0;
-                                        }
-                                    }
-                                }
-                              else
-                                {
-                                  if ( ((*itBsr).second.retxQueueSize > 0) || ((*itBsr).second.txQueueSize > 0))
-                                    {
-                                      if (poolIt->second.m_pool->GetSchedulingType () == SidelinkCommResourcePool::SCHEDULED)
-                                        {
-                                          // Resend BSR info for updating eNB peer MAC
-                                          m_freshSlBsr = true;
-                                        }
-                                    }
-                                }
-                              NS_LOG_LOGIC ("RNTI " << m_rnti << " Sidelink Tx " << bytesForThisLc << "\t new queues "
-                                                    << (uint32_t)(*it).first.lcId << " statusQueue " << (*itBsr).second.statusPduSize
-                                                    << " retxQueue" << (*itBsr).second.retxQueueSize << " txQueue" <<  (*itBsr).second.txQueueSize);
-                            }
-                          break;
-                        }
-                    } //end of for (itBsr = m_slBsrReceived.begin () ;  itBsr != m_slBsrReceived.end () ; itBsr++)
-                }
-              else
-                {
-                  NS_LOG_INFO ("PSSCH retransmission " << (4 - poolIt->second.m_psschTx.size () % 4));
-                  Ptr<PacketBurst> pb = poolIt->second.m_miSlHarqProcessPacket;
-                  for (std::list<Ptr<Packet> >::const_iterator j = pb->Begin (); j != pb->End (); ++j)
-                    {
-                      Ptr<Packet> pkt = (*j)->Copy ();
-                      m_uePhySapProvider->SendMacPdu (pkt);
-                    }
-                }
-
-              poolIt->second.m_psschTx.erase (allocIt);
-            } //end of if //check if we need to transmit PSSCH
-        } //end of for (poolIt = m_sidelinkTxPoolsMap.begin() ; poolIt != m_sidelinkTxPoolsMap.end() ; poolIt++)
+      frameNo++;
+      if (frameNo > 1024)
+      {
+        frameNo = 1;
+      }
+      subframeNo = (subframeNo + UL_PUSCH_TTIS_DELAY) % 10;
     }
+    else
+    {
+      subframeNo = subframeNo + UL_PUSCH_TTIS_DELAY;
+    }
+
+    NS_LOG_INFO ("Adjusted Frame no. " << frameNo << " Subframe no. " << subframeNo);
+
+    //Sidelink Discovery
+    if (m_discTxApps.size () > 0)
+    {
+      if (frameNo == m_discTxPool.m_nextDiscPeriod.frameNo && subframeNo == m_discTxPool.m_nextDiscPeriod.subframeNo)
+      {
+        //define periods and frames
+        m_discTxPool.m_currentDiscPeriod = m_discTxPool.m_nextDiscPeriod;
+        m_discTxPool.m_nextDiscPeriod = m_discTxPool.m_pool->GetNextDiscPeriod (frameNo, subframeNo);
+        m_discTxPool.m_nextDiscPeriod.frameNo++;
+        m_discTxPool.m_nextDiscPeriod.subframeNo++;
+        NS_LOG_INFO ("Starting new discovery period " << ". Next period at " << m_discTxPool.m_nextDiscPeriod.frameNo << "/" << m_discTxPool.m_nextDiscPeriod.subframeNo);
+        NS_ABORT_MSG_IF (m_discTxPool.m_nextDiscPeriod.frameNo > 1024 || m_discTxPool.m_nextDiscPeriod.subframeNo > 10, "Invalid frame or subframe number");
+
+        if (m_discTxPool.m_pool->GetSchedulingType () == SidelinkDiscResourcePool::UE_SELECTED)
+        {
+          //use txProbability
+          DiscGrant grant;
+          double p1 = m_p1UniformVariable->GetValue (0, 1);
+          double txProbability = m_discTxPool.m_pool->GetTxProbability ();       //calculate txProbability
+          NS_LOG_DEBUG ("txProbability = " << txProbability << " % ");
+          if (p1 <= txProbability / 100.0)
+          {
+            grant.m_resPsdch = m_resUniformVariable->GetInteger (0, m_discTxPool.m_npsdch - 1);
+            grant.m_rnti = m_rnti;
+            m_discTxPool.m_nextGrant = grant;
+            m_discTxPool.m_grantReceived = true;
+            NS_LOG_INFO ("UE selected grant: resource =" << (uint16_t) grant.m_resPsdch << "/" << m_discTxPool.m_npsdch);
+          }
+        }
+        else   //scheduled
+        {
+          //TODO
+          //use defined grant : SL-TF-IndexPair
+        }
+
+        //if we received a grant
+        if (m_discTxPool.m_grantReceived)
+        {
+          m_discTxPool.m_currentGrant = m_discTxPool.m_nextGrant;
+          NS_LOG_INFO ("Discovery grant received resource " << (uint32_t) m_discTxPool.m_currentGrant.m_resPsdch);
+
+          SidelinkDiscResourcePool::SubframeInfo tmp;
+          tmp.frameNo = m_discTxPool.m_currentDiscPeriod.frameNo - 1;
+          tmp.subframeNo = m_discTxPool.m_currentDiscPeriod.subframeNo - 1;
+
+          m_discTxPool.m_psdchTx = m_discTxPool.m_pool->GetPsdchTransmissions (m_discTxPool.m_currentGrant.m_resPsdch);
+
+          for (std::list<SidelinkDiscResourcePool::SidelinkTransmissionInfo>::iterator txIt = m_discTxPool.m_psdchTx.begin ();
+               txIt != m_discTxPool.m_psdchTx.end (); txIt++)
+          {
+            txIt->subframe = txIt->subframe + tmp;
+            //adjust for index starting at 1
+            txIt->subframe.frameNo++;
+            txIt->subframe.subframeNo++;
+            NS_LOG_INFO ("PSDCH: Subframe " << txIt->subframe.frameNo << "/" << txIt->subframe.subframeNo
+                                            << ": rbStart=" << (uint32_t) txIt->rbStart << ", rbLen=" << (uint32_t) txIt->nbRb);
+            NS_ABORT_MSG_IF (txIt->subframe.frameNo > 1024 || txIt->subframe.subframeNo > 10,
+                                 "Invalid frame or subframe number");
+            //Inform PHY: find a way to inform the PHY layer of the resources
+            m_uePhySapProvider->SetDiscGrantInfo (m_discTxPool.m_currentGrant.m_resPsdch);
+            //clear the grant
+            m_discTxPool.m_grantReceived = false;
+          }
+        }
+      }
+    }
+
+    std::list<SidelinkDiscResourcePool::SidelinkTransmissionInfo>::iterator allocIt;
+    //check if we need to transmit PSDCH
+    allocIt = m_discTxPool.m_psdchTx.begin ();
+    if (allocIt != m_discTxPool.m_psdchTx.end () && (*allocIt).subframe.frameNo == frameNo && (*allocIt).subframe.subframeNo == subframeNo)
+    {
+      NS_LOG_INFO ("PSDCH transmission");
+      for (std::list<uint32_t>::iterator txApp = m_discTxApps.begin (); txApp != m_discTxApps.end (); ++txApp)
+      {
+        //Create Discovery message for each discovery application announcing
+        SlDiscMsg discMsg;
+        discMsg.m_rnti = m_rnti;
+        discMsg.m_resPsdch = m_discTxPool.m_currentGrant.m_resPsdch;
+
+        discMsg.m_proSeAppCode =  (std::bitset <184>) * txApp;
+
+        Ptr<SlDiscMessage> msg = Create<SlDiscMessage> ();
+        msg->SetSlDiscMessage (discMsg);
+        NS_LOG_INFO ("discovery message sent by " << m_rnti << ", proSeAppCode = " << *txApp);
+        m_discoveryAnnouncementTrace (m_rnti, *txApp);
+        m_uePhySapProvider->SendLteControlMessage (msg);
+      }
+      m_discTxPool.m_psdchTx.erase (allocIt);
+    }
+
+    //Sidelink Communication
+    if ((Simulator::Now () >= m_slBsrLast + m_slBsrPeriodicity) && (m_freshSlBsr == true))
+    {
+      SendSidelinkReportBufferStatus ();
+      m_slBsrLast = Simulator::Now ();
+      m_freshSlBsr = false;
+    }
+    std::map <uint32_t, PoolInfo>::iterator poolIt;
+    for (poolIt = m_sidelinkTxPoolsMap.begin (); poolIt != m_sidelinkTxPoolsMap.end (); poolIt++)
+    {
+      //Check if this is a new SC period
+      if (frameNo == poolIt->second.m_nextScPeriod.frameNo && subframeNo == poolIt->second.m_nextScPeriod.subframeNo)
+      {
+        poolIt->second.m_currentScPeriod = poolIt->second.m_nextScPeriod;
+        poolIt->second.m_nextScPeriod = poolIt->second.m_pool->GetNextScPeriod (frameNo, subframeNo);
+        //adjust because scheduler starts with frame/subframe = 1
+        poolIt->second.m_nextScPeriod.frameNo++;
+        poolIt->second.m_nextScPeriod.subframeNo++;
+        NS_LOG_INFO ("Starting new SC period for pool of group " << poolIt->first << ". Next period at "
+                                                                 << poolIt->second.m_nextScPeriod.frameNo << "/" << poolIt->second.m_nextScPeriod.subframeNo);
+        NS_ABORT_MSG_IF (poolIt->second.m_nextScPeriod.frameNo > 1024 || poolIt->second.m_nextScPeriod.subframeNo > 10,
+                         "Invalid frame or subframe number");
+
+        Ptr<PacketBurst> emptyPb = CreateObject <PacketBurst> ();
+        poolIt->second.m_miSlHarqProcessPacket = emptyPb;
+
+        if (poolIt->second.m_pool->GetSchedulingType () == SidelinkCommResourcePool::UE_SELECTED)
+        {
+          //If m_slHasDataToTx is False here (at the beginning of the period), it means
+          //that no transmissions in the PSSCH occurred in the previous SC period.
+          //Notify the RRC for stopping SLSS transmissions if appropriate
+
+          if (!m_slHasDataToTx)
+          {
+            m_cmacSapUser->NotifyMacHasNoSlDataToSend ();
+          }
+          //Make m_slHasDataToTx = false here (beginning of the period) to detect if transmissions
+          //in the PSSCH are performed in this period
+          m_slHasDataToTx = false;
+
+          //get the BSR for this pool
+          //if we have data in the queue
+          //find the BSR for that pool (will also give the SidleinkLcIdentifier)
+          std::map <SidelinkLcIdentifier, LteMacSapProvider::ReportBufferStatusParameters>::iterator itBsr;
+          for (itBsr = m_slBsrReceived.begin ();  itBsr != m_slBsrReceived.end (); itBsr++)
+          {
+            if (itBsr->first.dstL2Id == poolIt->first)
+            {
+              //this is the BSR for the pool
+              NS_LOG_DEBUG ("Found the BSR. Tx Queue size = "<<(*itBsr).second.txQueueSize);
+              break;
+            }
+          }
+
+          if (itBsr == m_slBsrReceived.end ()
+              || ( (*itBsr).second.txQueueSize == 0
+              && (*itBsr).second.retxQueueSize == 0
+              && (*itBsr).second.statusPduSize == 0 ))
+          {
+            NS_LOG_INFO ("No BSR received. Assume no data to transfer");
+          }
+          else  // BSR received = there is data to transfer
+          {
+            if(m_v2v) // Mode3
+            {
+              NS_LOG_DEBUG ("SL BSR size =" << m_slBsrReceived.size ());
+              SidelinkGrantV2V grantV2V;
+              if(poolIt->second.m_reserveCount==0)
+              {
+                poolIt->second.m_reserveCount = m_ueSelectedUniformVariable->GetInteger(5, 15);
+                // pick a random subChannel for transmission
+                uint32_t subframe = m_ueSelectedUniformVariable->GetInteger(0, poolIt->second.m_pool->GetScPeriod());
+                
+                SidelinkCommResourcePool::SubframeInfo relativeSubframe;
+                SidelinkCommResourcePool::SubframeInfo ultimateSubframe;
+                relativeSubframe.frameNo = subframe / 10;
+                relativeSubframe.subframeNo = subframe % 10;
+                ultimateSubframe.frameNo = poolIt->second.m_currentScPeriod.frameNo + relativeSubframe.frameNo;
+                ultimateSubframe.subframeNo = poolIt->second.m_currentScPeriod.subframeNo + relativeSubframe.subframeNo;
+                
+                if(ultimateSubframe.subframeNo >= 10)
+                {
+                  ultimateSubframe.frameNo++;
+                  ultimateSubframe.subframeNo -= 10;
+                }
+
+                grantV2V.m_grantedSubframe = ultimateSubframe;
+                grantV2V.m_subChannelIndex = m_ueSelectedUniformVariable->GetInteger (0, poolIt->second.m_pool->GetNSubChannel());
+                grantV2V.m_rbStart = poolIt->second.m_pool->GetSubChannelRbStartIndex(pickedSubChannel);
+                grantV2V.m_rbLen = m_slGrantSize; // 2 Rbs for SCI (m_slGrantSize = 2)
+                grantV2V.m_mcs = m_slGrantMcs;
+                grantV2V.m_tbSize = 0; //computed later
+              }
+              else
+              {
+                poolIt->second.m_reserveCount--; // decrement by 1
+                grantV2V = poolIt->second.m_prevGrantV2V;
+              }
+              poolIt->second.m_nextGrantV2V = grantV2V;
+              poolIt->second.m_grantReceived = true;
+            }
+            else
+            {
+              //we need to pick a random resource from the pool
+              NS_LOG_DEBUG ("SL BSR size =" << m_slBsrReceived.size ());
+              SidelinkGrant grant;
+              //in order to pick a resource that is valid, we compute the number of sub-channels
+              //on the PSSCH
+              uint16_t nbTxOpt = poolIt->second.m_npscch;
+              //Randomly selected Resource in PSCCH.
+              //m_resPscch is for PSCCH, m_rbStart is for PSSCH.
+              grant.m_resPscch = m_ueSelectedUniformVariable->GetInteger (0, nbTxOpt - 1);
+              grant.m_tpc = 0;
+              std::vector <uint8_t> validRbStarts = poolIt->second.m_pool->GetValidRBstart (m_slGrantSize);
+              NS_ABORT_MSG_IF (validRbStarts.size () == 0, "UE_MAC: No resources available for configured grant size!");
+              grant.m_rbStart = validRbStarts [m_ueSelectedUniformVariable->GetInteger (0, validRbStarts.size () - 1)];
+              grant.m_hoppingInfo = poolIt->second.m_pool->GetDataHoppingConfig ().hoppingInfo;
+              if (grant.m_hoppingInfo < 4)
+              {
+                NS_LOG_DEBUG("Hopping enabled");
+                grant.m_hopping = 1; //Hopping is enabled
+              }
+              else
+              {
+                NS_LOG_DEBUG("Hopping disabled");
+                grant.m_hopping = 0; //Hopping is disabled
+              }
+
+              switch (m_slKtrp)
+              {
+                case 1:
+                  grant.m_iTrp = m_ueSelectedUniformVariable->GetInteger (0, 7);
+                  break;
+                case 2:
+                  grant.m_iTrp = m_ueSelectedUniformVariable->GetInteger (8, 35);
+                  break;
+                case 4:
+                  grant.m_iTrp = m_ueSelectedUniformVariable->GetInteger (36, 105);
+                  break;
+                case 8:
+                  grant.m_iTrp = 106;
+                  break;
+                default:
+                  NS_FATAL_ERROR ("Invalid KTRP value " << (uint16_t) m_slKtrp << ". Supported values: [1, 2, 4, 8]");
+              }
+
+              if (this->m_useSetTrpIndex == true)
+              {
+                grant.m_iTrp = this->m_setTrpIndex;
+              }
+              
+              grant.m_rbLen = m_slGrantSize;
+              grant.m_mcs = m_slGrantMcs;
+              grant.m_tbSize = 0; //computed later
+              poolIt->second.m_nextGrant = grant;
+              poolIt->second.m_grantReceived = true;
+              NS_LOG_INFO ("UE selected grant: resource=" << (uint16_t) grant.m_resPscch << "/"
+                                                          << poolIt->second.m_npscch << ", rbStart=" << (uint16_t) grant.m_rbStart
+                                                          << ", rbLen=" << (uint16_t) grant.m_rbLen << ", mcs=" << (uint16_t) grant.m_mcs
+                                                          << ",itrp=" << (uint16_t) grant.m_iTrp);
+            }
+          } 
+        } // end if (UE_SELECTED)
+
+        //if we received a grant, compute the transmission opportunities for PSCCH and PSSCH
+        if (poolIt->second.m_grantReceived)
+        {
+          if (poolIt->second.m_pool->GetSchedulingType () == SidelinkCommResourcePool::SCHEDULED)
+          {
+            std::map <SidelinkLcIdentifier, LteMacSapProvider::ReportBufferStatusParameters>::iterator itBsr;
+            for (itBsr = m_slBsrReceived.begin ();  itBsr != m_slBsrReceived.end (); itBsr++)
+            {
+              if (itBsr->first.dstL2Id == poolIt->first)
+              {
+                //this is the BSR for the pool
+                NS_LOG_DEBUG ("Found the BSR. Tx Queue size = "<<(*itBsr).second.txQueueSize);
+                break;
+              }
+            }
+            
+            if (itBsr == m_slBsrReceived.end ()
+                || ( (*itBsr).second.txQueueSize == 0
+                && (*itBsr).second.retxQueueSize == 0
+                && (*itBsr).second.statusPduSize == 0))
+            {
+              NS_LOG_INFO ("We receive the grant from the eNB but the transmission queue size is zero. Assume no data to transfer for now");
+              continue;
+            }            
+          }
+          //make the grant our current grant
+          if(m_v2v)
+          {
+            poolIt->second.m_currentGrantV2V = poolIt->second.m_nextGrantV2V;
+
+            std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> pscchTx;
+            SidelinkCommResourcePool::SidelinkTransmissionInfo pscchTx_item;
+            pscchTx_item.subframe = poolIt->second.m_currentGrantV2V.m_grantedSubframe;
+            pscchTx_item.rbStart = poolIt->second.m_currentGrantV2V.m_rbStart;
+            pscchTx_item.nbRb = 2;
+            pscchTx.push_back(pscchTx_item);
+
+            std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> psschTx;
+            SidelinkCommResourcePool::SidelinkTransmissionInfo psschTx_item;
+            psschTx_item.subframe = poolIt->second.m_currentGrantV2V.m_grantedSubframe;
+            psschTx_item.rbStart = poolIt->second.m_currentGrantV2V.m_rbStart + 2;
+            psschTx_item.nbRb = poolIt->second.m_currentGrantV2V.m_rbLen;
+            psschTx.push_back(psschTx_item);
+
+            poolIt->second.m_pscchTx = pscchTx;
+            poolIt->second.m_psschTx = psschTx;
+          }
+          else
+          {
+            poolIt->second.m_currentGrant = poolIt->second.m_nextGrant;
+            NS_LOG_INFO ("Sidelink grant received resource " << (uint32_t) poolIt->second.m_currentGrant.m_resPscch);
+            SidelinkCommResourcePool::SubframeInfo subFrameInfo;
+            subFrameInfo.frameNo = poolIt->second.m_currentScPeriod.frameNo - 1;
+            subFrameInfo.subframeNo = poolIt->second.m_currentScPeriod.subframeNo - 1;
+
+            // Collect statistics for SL UE mac scheduling trace
+            SlUeMacStatParameters stats_params;
+            stats_params.m_frameNo = subFrameInfo.frameNo + 1;
+            stats_params.m_subframeNo = subFrameInfo.subframeNo + 1;
+            stats_params.m_pscchRi = poolIt->second.m_currentGrant.m_resPscch;
+            stats_params.m_cellId = 0;
+            stats_params.m_imsi = 0;
+            stats_params.m_pscchFrame1 = 0;
+            stats_params.m_pscchSubframe1 = 0;
+            stats_params.m_pscchFrame2 = 0;
+            stats_params.m_pscchSubframe2 = 0;
+            stats_params.m_psschFrame = 0;
+            stats_params.m_psschSubframeStart = 0;
+
+            poolIt->second.m_pscchTx = poolIt->second.m_pool->GetPscchTransmissions (poolIt->second.m_currentGrant.m_resPscch);
+            uint16_t tx_counter = 1;
+            for (std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator txIt = poolIt->second.m_pscchTx.begin ();
+                 txIt != poolIt->second.m_pscchTx.end (); txIt++)
+            {
+              txIt->subframe = txIt->subframe + subFrameInfo;
+              //adjust for index starting at 1
+              txIt->subframe.frameNo++;
+              txIt->subframe.subframeNo++;
+              NS_LOG_INFO ("PSCCH: Subframe " << txIt->subframe.frameNo << "/" << txIt->subframe.subframeNo
+                                              << ": rbStart=" << (uint32_t) txIt->rbStart << ", rbLen=" << (uint32_t) txIt->nbRb);
+              NS_ABORT_MSG_IF (txIt->subframe.frameNo > 1024 || txIt->subframe.subframeNo > 10,
+                               "Invalid frame or subframe number");
+              switch (tx_counter)
+              {
+                case 1:
+                  stats_params.m_pscchFrame1 = txIt->subframe.frameNo;
+                  stats_params.m_pscchSubframe1 = txIt->subframe.subframeNo;
+                  break;
+                case 2:
+                  stats_params.m_pscchFrame2 = txIt->subframe.frameNo;
+                  stats_params.m_pscchSubframe2 = txIt->subframe.subframeNo;
+                  break;
+                default:
+                  NS_FATAL_ERROR ("PSCCH ONLY SUPPORTS 2 TRANSMISSIONS PER UE GRANT!");
+              }
+              tx_counter++;
+            }
+            poolIt->second.m_psschTx = poolIt->second.m_pool->GetPsschTransmissions (subFrameInfo, poolIt->second.m_currentGrant.m_iTrp, poolIt->second.m_currentGrant.m_rbStart, poolIt->second.m_currentGrant.m_rbLen);
+
+            //adjust PSSCH frame to next period
+            for (std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator txIt = poolIt->second.m_psschTx.begin ();
+                 txIt != poolIt->second.m_psschTx.end (); txIt++)
+            {
+              //adjust for index starting at 1
+              txIt->subframe.frameNo++;
+              txIt->subframe.subframeNo++;
+              NS_LOG_INFO ("PSSCH: Subframe " << txIt->subframe.frameNo << "/"
+                                              << txIt->subframe.subframeNo << ": rbStart=" << (uint32_t) txIt->rbStart
+                                              << ", rbLen=" << (uint32_t) txIt->nbRb);
+              NS_ABORT_MSG_IF (txIt->subframe.frameNo > 1024 || txIt->subframe.subframeNo > 10,
+                                                     "Invalid frame or subframe number");
+            }
+          } // end if(m_v2v){} else{
+
+          //compute the TB size
+          if(m_v2v)
+          {
+            poolIt->second.m_currentGrantV2V.m_tbSize = m_amc->GetUlTbSizeFromMcs (poolIt->second.m_currentGrantV2V.m_mcs, poolIt->second.m_currentGrantV2V.m_rbLen) / 8;
+          }
+          else
+          {
+            poolIt->second.m_currentGrant.m_tbSize = m_amc->GetUlTbSizeFromMcs (poolIt->second.m_currentGrant.m_mcs, poolIt->second.m_currentGrant.m_rbLen) / 8;
+            NS_LOG_INFO ("Sidelink Tb size = " << poolIt->second.m_currentGrant.m_tbSize << " bytes (mcs=" << (uint32_t) poolIt->second.m_currentGrant.m_mcs << ")");
+
+            stats_params.m_rnti = m_rnti;
+            stats_params.m_mcs = poolIt->second.m_currentGrant.m_mcs;
+            stats_params.m_tbSize = poolIt->second.m_currentGrant.m_tbSize;
+            stats_params.m_psschTxStartRB = poolIt->second.m_currentGrant.m_rbStart;
+            stats_params.m_psschTxLengthRB = poolIt->second.m_currentGrant.m_rbLen;
+            stats_params.m_psschItrp = poolIt->second.m_currentGrant.m_iTrp;
+            stats_params.m_timestamp = Simulator::Now ().GetMilliSeconds ();
+
+            m_slPscchScheduling (stats_params); //Trace
+          }
+
+          //clear the grant
+          poolIt->second.m_prevGrantV2V = m_currentGrantV2V;
+          poolIt->second.m_grantReceived = false;
+        } //end of if (poolIt->second.m_grantReceived)
+      }
+      else
+      {
+        NS_LOG_DEBUG ("Sidelink Control period not started yet");
+        NS_LOG_DEBUG("current frame number = " << frameNo <<" Next SC period frame number = "<<poolIt->second.m_nextScPeriod.frameNo);
+        NS_LOG_DEBUG("current subframe number = " << subframeNo <<" Next SC period subframe number = "<<poolIt->second.m_nextScPeriod.subframeNo);
+      }
+
+      std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator allocIt;
+      //check if we need to transmit PSCCH
+      allocIt = poolIt->second.m_pscchTx.begin ();
+      if (allocIt != poolIt->second.m_pscchTx.end () && (*allocIt).subframe.frameNo == frameNo && (*allocIt).subframe.subframeNo == subframeNo)
+      {
+        //transmission of PSCCH, no need for HARQ
+        if (poolIt->second.m_pscchTx.size () == 2)
+        {
+          NS_LOG_INFO ("First PSCCH transmission");
+        }
+        else
+        {
+          NS_LOG_INFO ("Second PSCCH transmission");
+        }
+        if(m_v2v)
+        {
+          // create SCI format 1 message
+          SciF1ListElement_s sci;
+          sci.m_priority = 0; // no priority
+          sci.m_resReserve = 1; // (1 = 100ms)
+          sci.m_frl = poolIt->second.m_currentGrantV2V.m_rbStart; // frl = frequency resource location
+          sci.m_timeGap = 0; // no retransmission
+          sci.m_reIndex = 0;
+          sci.m_mcs = poolIt->second.m_currentGrantV2V.m_mcs;
+          sci.m_frameNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.frameNo;
+          sci.m_subframeNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.subframeNo;
+
+          Ptr<SciLteControlMessage> msg = Create<SciLteControlMessage> ();
+          msg->SetSciF1 (sci);
+        }
+        else
+        {
+          //create SCI format 0 message
+          SciF0ListElement_s sci;
+          sci.m_rnti = m_rnti;
+          sci.m_mcs = poolIt->second.m_currentGrant.m_mcs;
+          sci.m_tbSize = poolIt->second.m_currentGrant.m_tbSize;
+          sci.m_resPscch = poolIt->second.m_currentGrant.m_resPscch;
+          sci.m_rbLen = poolIt->second.m_currentGrant.m_rbLen;
+          sci.m_rbStart = poolIt->second.m_currentGrant.m_rbStart;
+          sci.m_trp = poolIt->second.m_currentGrant.m_iTrp;
+          sci.m_hopping = poolIt->second.m_currentGrant.m_hopping;
+          sci.m_hoppingInfo = poolIt->second.m_currentGrant.m_hoppingInfo;
+          sci.m_groupDstId = (poolIt->first & 0xFF);
+
+          Ptr<SciLteControlMessage> msg = Create<SciLteControlMessage> ();
+          msg->SetSciF0 (sci);
+        }
+
+        m_uePhySapProvider->SendLteControlMessage (msg);
+        poolIt->second.m_pscchTx.erase (allocIt);
+      }
+
+      //check if we need to transmit PSSCH
+      allocIt = poolIt->second.m_psschTx.begin ();
+      if (allocIt != poolIt->second.m_psschTx.end () && (*allocIt).subframe.frameNo == frameNo && (*allocIt).subframe.subframeNo == subframeNo)
+      {
+        // Collect statistics for SL share channel UE MAC scheduling trace
+        SlUeMacStatParameters stats_sch_params;
+        stats_sch_params.m_frameNo = poolIt->second.m_currentScPeriod.frameNo;
+        stats_sch_params.m_subframeNo = poolIt->second.m_currentScPeriod.subframeNo;
+        stats_sch_params.m_psschFrame = frameNo;
+        stats_sch_params.m_psschSubframe = subframeNo;
+        stats_sch_params.m_cellId = 0;
+        stats_sch_params.m_imsi = 0;
+        stats_sch_params.m_pscchRi = 0;
+        stats_sch_params.m_pscchFrame1 = 0;
+        stats_sch_params.m_pscchSubframe1 = 0;
+        stats_sch_params.m_pscchFrame2 = 0;
+        stats_sch_params.m_pscchSubframe2 = 0;
+        stats_sch_params.m_psschItrp = 0;
+        stats_sch_params.m_psschFrameStart = 0;
+        stats_sch_params.m_psschSubframeStart = 0;
+
+        //Get first subframe of PSSCH
+        SidelinkCommResourcePool::SubframeInfo currScPeriod;
+        currScPeriod.frameNo = poolIt->second.m_currentScPeriod.frameNo - 1;
+        currScPeriod.subframeNo = poolIt->second.m_currentScPeriod.subframeNo - 1;
+        std::vector<uint32_t> psschSFVector = poolIt->second.m_pool->GetAllPsschSubframes ();
+        uint32_t psschStartSubframe = 10 * (currScPeriod.frameNo % 1024) + currScPeriod.subframeNo % 10 + psschSFVector[0];
+        stats_sch_params.m_psschFrameStart = psschStartSubframe / 10 + 1;
+        stats_sch_params.m_psschSubframeStart = psschStartSubframe % 10 + 1;
+
+        stats_sch_params.m_rnti = m_rnti;
+        stats_sch_params.m_mcs = poolIt->second.m_currentGrant.m_mcs;
+        stats_sch_params.m_tbSize = poolIt->second.m_currentGrant.m_tbSize;
+        stats_sch_params.m_psschTxStartRB = (*allocIt).rbStart;
+        stats_sch_params.m_psschTxLengthRB = (*allocIt).nbRb;
+        stats_sch_params.m_timestamp = Simulator::Now ().GetMilliSeconds ();
+
+        m_slPsschScheduling (stats_sch_params); //Trace
+        if (poolIt->second.m_psschTx.size () % 4 == 0)
+        {
+          NS_LOG_INFO ("New PSSCH transmission");
+          Ptr<PacketBurst> emptyPb = CreateObject <PacketBurst> ();
+          poolIt->second.m_miSlHarqProcessPacket = emptyPb;
+
+          //get the BSR for this pool
+          //if we have data in the queue
+          //find the BSR for that pool (will also give the SidleinkLcIdentifier)
+
+          std::map <SidelinkLcIdentifier, LteMacSapProvider::ReportBufferStatusParameters>::iterator itBsr;
+          for (itBsr = m_slBsrReceived.begin ();  itBsr != m_slBsrReceived.end (); itBsr++)
+          {
+            if (itBsr->first.dstL2Id == poolIt->first)
+            {
+              //this is the BSR for the pool
+              std::map <SidelinkLcIdentifier, LcInfo>::iterator it = m_slLcInfoMap.find (itBsr->first);
+              //for Sidelink we should never have retxQueueSize since it is unacknowledged mode
+              //we still keep the process similar to uplink to be more generic (and maybe handle
+              //future modifications)
+              if ( ((*itBsr).second.statusPduSize > 0)
+                 || ((*itBsr).second.retxQueueSize > 0)
+                 || ((*itBsr).second.txQueueSize > 0))
+              {
+                //We have data to send in the PSSCH, notify the RRC to start/continue sending SLSS if appropriate
+                m_slHasDataToTx = true;
+                m_cmacSapUser->NotifyMacHasSlDataToSend ();
+
+                NS_ASSERT ((*itBsr).second.statusPduSize == 0 && (*itBsr).second.retxQueueSize == 0);
+                //similar code as uplink transmission
+                uint32_t bytesForThisLc = poolIt->second.m_currentGrant.m_tbSize;
+                NS_LOG_LOGIC ("RNTI " << m_rnti << " Sidelink Tx " << bytesForThisLc << " bytes to LC "
+                                      << (uint32_t)(*itBsr).first.lcId << " statusQueue " << (*itBsr).second.statusPduSize
+                                      << " retxQueue" << (*itBsr).second.retxQueueSize << " txQueue"
+                                      <<  (*itBsr).second.txQueueSize);
+                if (((*itBsr).second.statusPduSize > 0) && (bytesForThisLc > (*itBsr).second.statusPduSize))
+                {
+                  (*it).second.macSapUser->NotifyTxOpportunity ((*itBsr).second.statusPduSize, 0, 0, m_componentCarrierId, m_rnti, (*itBsr).first.lcId);
+                  bytesForThisLc -= (*itBsr).second.statusPduSize; //decrement size available for data
+                  NS_LOG_DEBUG ("Serve STATUS PDU" << (*itBsr).second.statusPduSize);
+                  (*itBsr).second.statusPduSize = 0;
+                }
+                else
+                {
+                  if ((*itBsr).second.statusPduSize > bytesForThisLc)
+                  {
+                    NS_FATAL_ERROR ("Insufficient Tx Opportunity for sending a status message");
+                  }
+                }
+                // 7 is the min TxOpportunity useful for Rlc
+                if ((bytesForThisLc > 7)
+                    && (((*itBsr).second.retxQueueSize > 0)
+                    || ((*itBsr).second.txQueueSize > 0)))
+                {
+                  if ((*itBsr).second.retxQueueSize > 0)
+                  {
+                    NS_LOG_DEBUG ("Serve retx DATA, bytes " << bytesForThisLc);
+                    (*it).second.macSapUser->NotifyTxOpportunity (bytesForThisLc, 0, 0, m_componentCarrierId, m_rnti, (*itBsr).first.lcId);
+                    if ((*itBsr).second.retxQueueSize >= bytesForThisLc)
+                    {
+                      (*itBsr).second.retxQueueSize -= bytesForThisLc;
+                    }
+                    else
+                    {
+                      (*itBsr).second.retxQueueSize = 0;
+                    }
+                  }
+                  else if ((*itBsr).second.txQueueSize > 0)
+                  {
+                    // minimum RLC overhead due to header
+                    uint32_t rlcOverhead = 2;
+                    NS_LOG_DEBUG ("Serve tx DATA, bytes " << bytesForThisLc << ", RLC overhead " << rlcOverhead);
+                    (*it).second.macSapUser->NotifyTxOpportunity (bytesForThisLc, 0, 0, m_componentCarrierId, m_rnti, (*itBsr).first.lcId);
+                    if ((*itBsr).second.txQueueSize >= bytesForThisLc - rlcOverhead)
+                    {
+                      (*itBsr).second.txQueueSize -= bytesForThisLc - rlcOverhead;
+                    }
+                    else
+                    {
+                      (*itBsr).second.txQueueSize = 0;
+                    }
+                  }
+                }
+                else
+                {
+                  if ( ((*itBsr).second.retxQueueSize > 0) || ((*itBsr).second.txQueueSize > 0))
+                  {
+                    if (poolIt->second.m_pool->GetSchedulingType () == SidelinkCommResourcePool::SCHEDULED)
+                    {
+                      // Resend BSR info for updating eNB peer MAC
+                      m_freshSlBsr = true;
+                    }
+                  }
+                }
+                NS_LOG_LOGIC ("RNTI " << m_rnti << " Sidelink Tx " << bytesForThisLc << "\t new queues "
+                                      << (uint32_t)(*it).first.lcId << " statusQueue " << (*itBsr).second.statusPduSize
+                                      << " retxQueue" << (*itBsr).second.retxQueueSize << " txQueue" <<  (*itBsr).second.txQueueSize);
+              }
+              break;
+            }
+          } //end of for (itBsr = m_slBsrReceived.begin () ;  itBsr != m_slBsrReceived.end () ; itBsr++)
+        }
+        else
+        {
+          NS_LOG_INFO ("PSSCH retransmission " << (4 - poolIt->second.m_psschTx.size () % 4));
+          Ptr<PacketBurst> pb = poolIt->second.m_miSlHarqProcessPacket;
+          for (std::list<Ptr<Packet> >::const_iterator j = pb->Begin (); j != pb->End (); ++j)
+          {
+            Ptr<Packet> pkt = (*j)->Copy ();
+            m_uePhySapProvider->SendMacPdu (pkt);
+          }
+        }
+
+        poolIt->second.m_psschTx.erase (allocIt);
+      } //end of if //check if we need to transmit PSSCH
+    } //end of for (poolIt = m_sidelinkTxPoolsMap.begin() ; poolIt != m_sidelinkTxPoolsMap.end() ; poolIt++)
+  }
 }
 
 void

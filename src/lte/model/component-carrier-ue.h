@@ -73,7 +73,7 @@ public:
    * \param s a pointer to the LteEnbMac
    */ 
   void SetMac (Ptr<LteUeMac> s);
-  
+
 protected:
   // inherited from Object
   virtual void DoInitialize (void);

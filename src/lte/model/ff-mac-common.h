@@ -178,9 +178,9 @@ struct SlDciListElement_s
 
 /**
  * \brief See section 5.4.3.1.1 3GPP TS 36.212 Rel 12.4
- * \struct SciListElement_s
+ * \struct SciF0ListElement_s
  */
-struct SciListElement_s
+struct SciF0ListElement_s
 {
   uint16_t  m_rnti; ///< RNTI
   uint8_t   m_resPscch; ///< added for modeling
@@ -193,6 +193,50 @@ struct SciListElement_s
   uint8_t   m_mcs; ///< MCS
   uint16_t  m_timing; ///< Timing advance indication
   uint8_t   m_groupDstId; ///< Group destination ID
+};
+
+/**
+* See section 5.4.3.1.2 3GPP TS 36.212 Rel 14
+*/
+
+struct SciF1ListElement_s
+{
+	uint8_t m_priority; ///< priority
+	uint8_t m_resReserve; ///< resource reservation interval
+	/*
+	* 1: 100ms, 2: 200ms, ... 10: 1000ms, 11: 50ms, 12: 20ms
+	*/
+	uint16_t m_frl; ///< Frequency resource location of initial transmission and retranmission
+	/*
+	* N_subch: total number of sub-channels in pool
+	* L_subch: contiguously allocated subchannels
+	* n^start: starting index
+	*
+	* m_frl = resource indication value (RIV)
+	* if (L_subch -1) <= floor(N_subch /2)
+	*	RIV = N_subch * (L_subch - 1) + n^start;
+	* else
+	*	RIV = N_subch * (N_subch - L_subch + 1) + (N_subch - 1 - n^start);
+	*/
+	uint8_t m_timeGap; ///< time gap between initial transmission and retransmission
+	uint8_t m_reIndex ///< retransmission index
+	/*
+	* Suppose SCI format 1 transmitted on the PSCCH resource 'm' in subframe 't_n'
+	* if m_timeGap == 0
+	* 	resource for PSSCH 
+	*	m, m+1, ..., m + L_subch -1 in subframe t_n
+	* else if reIndex == 0
+	*	resource for PSSCH 
+	*	m, m+1, ..., m + L_subch -1 in subframe t_n
+	*	n^start, n^start+1, ..., n^start + L_subch -1 in subframe t_(n+m_timeGap)
+	* else if reIndex ==1
+	*	resource for PSCCH
+	*	n^start, n^start+1, ..., n^start + L_subch -1 in subframe t_(n-m_timeGap)
+	*	m, m+1, ..., m + L_subch -1 in subframe t_n
+	*/
+	uint8_t m_mcs; ///< MCS
+        uint32_t m_frameNo; // added for modeling
+        uint32_t m_subframeNo; // added for modeling
 };
  
 /**

@@ -427,6 +427,16 @@ private:
     return l.lcId < r.lcId || (l.lcId == r.lcId && l.srcL2Id < r.srcL2Id) || (l.lcId == r.lcId && l.srcL2Id == r.srcL2Id && l.dstL2Id < r.dstL2Id);
   }
 
+  struct SidelinkGrantV2V
+  {
+    uint8_t m_subChannelIndex;
+    SidelinkCommResourcePool::SubframeInfo m_grantedSubframe;
+    uint8_t m_rbStart;
+    uint8_t m_rbLen;
+    uint8_t m_mcs;
+    uint32_t m_tbSize;
+  }
+
   /// Sidelink grant related variables
   struct SidelinkGrant
   {
@@ -450,12 +460,17 @@ private:
     Ptr<SidelinkCommResourcePool> m_pool; ///< The Sidelink communication resource pool
     SidelinkCommResourcePool::SubframeInfo m_currentScPeriod; ///< Start of the current Sidelink Control (SC) period
     SidelinkGrant m_currentGrant; ///< Grant for the next SC period
+    SidelinkGrantV2V m_currentGrantV2V;
     SidelinkCommResourcePool::SubframeInfo m_nextScPeriod; ///< Start of next SC period
 
     uint32_t m_npscch; ///< Number of PSCCH available in the pool
 
     bool m_grantReceived; ///< True if we receive the grant
     SidelinkGrant m_nextGrant; ///< Grant received for the next SC period
+    SidelinkGrantV2V m_nextGrantV2V;
+    SidelinkGrantV2V m_prevGrantV2V;
+
+    uint8_t m_reserveCount;
 
     std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> m_pscchTx; ///< List of PSCCH transmissions within the pool
     std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> m_psschTx; ///< List of PSSCH transmissions within the pool

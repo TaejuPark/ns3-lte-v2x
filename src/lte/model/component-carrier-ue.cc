@@ -75,7 +75,6 @@ ComponentCarrierUe::DoDispose ()
   Object::DoDispose ();
 }
 
-
 void
 ComponentCarrierUe::DoInitialize (void)
 {

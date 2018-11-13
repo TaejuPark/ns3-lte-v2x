@@ -128,6 +128,7 @@ main (int argc, char *argv[])
   Ptr<PointToPointEpcHelper>  epcHelper = CreateObject<PointToPointEpcHelper> ();
   lteHelper->SetEpcHelper (epcHelper);
   lteHelper->SetAttribute ("UseSidelink", BooleanValue (true));
+  lteHelper->SetV2VMode(true);
   // Set pathloss model
   lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::FriisPropagationLossModel"));
   lteHelper->DisableEnbPhy (true);

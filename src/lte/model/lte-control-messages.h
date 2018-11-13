@@ -452,16 +452,19 @@ public:
   * \brief add a SCI into the message
   * \param sci the sci
   */
-  void SetSci (SciListElement_s sci);
+  void SetSciF0 (SciF0ListElement_s sci);
+  void SetSciF1 (SciF1ListElement_s sci);
 
   /**
   * \brief Get sci informations
   * \return sci messages
   */
-  SciListElement_s GetSci (void);
+  SciF0ListElement_s GetSciF0 (void);
+  SciF1ListElement_s GetSciF1 (void);
 
 private:
-  SciListElement_s m_sci; ///< Sidelink control information message
+  SciF0ListElement_s m_scif0; ///< Sidelink control information message
+  SciF1ListElement_s m_scif1
 };
 
 /**

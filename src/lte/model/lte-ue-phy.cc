@@ -426,6 +426,7 @@ LteUePhy::DoInitialize ()
   uint32_t nodeId = 0;
   uint32_t frameNo = 1;
   uint32_t subframeNo = 1;
+  m_v2v = true; // enabling V2V mode;
 
   if (m_chooseFrameAndSubframeRandomly)
     {
@@ -590,6 +591,7 @@ LteUePhy::SetSubChannelsForTransmission (std::vector <int> mask)
   m_subChannelsForTransmission = mask;
 
   Ptr<SpectrumValue> txPsd = CreateTxPowerSpectralDensity ();
+  m_sidelinkSpectrumPhy->SetTxPowerSpectralDensity (txPsd);
   m_uplinkSpectrumPhy->SetTxPowerSpectralDensity (txPsd);
 }
 
@@ -1180,7 +1182,7 @@ LteUePhy::ReceiveLteControlMessageList (std::list<Ptr<LteControlMessage> > msgLi
         else if (msg->GetMessageType () == LteControlMessage::SCI)
           {
             Ptr<SciLteControlMessage> msg2 = DynamicCast<SciLteControlMessage> (msg);
-            SciListElement_s sci = msg2->GetSci ();
+            SciF0ListElement_s sci = msg2->GetSciF0 ();
             //must check if the destination is one to monitor
             std::list <uint32_t>::iterator it;
             bool for_me = false;
@@ -1678,7 +1680,14 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                       else
                         {
                           SetSubChannelsForTransmission (rbMask);
-                          m_uplinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, m_slTxPoolInfo.m_currentGrants.begin ()->second.m_grant.m_groupDstId);
+                          if(m_v2v)
+                          {
+                            m_sidelinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, m_slTxPoolInfo.m_currentGrants.begin ()->second.m_grant.m_groupDstId);
+                          }
+                          else
+                          {
+                            m_uplinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, m_slTxPoolInfo.m_currentGrants.begin ()->second.m_grant.m_groupDstId);
+                          }
                         }
                     }
                   else
@@ -1687,8 +1696,8 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                       NS_LOG_LOGIC ("trying to do a PSSCH transmission while there is a PSBCH (SLSS) transmission scheduled... Ignoring transmission ");
                     }
                 }
-              else
-                {
+              //else
+              //  {
                   // send only PSCCH (ideal: fake null bandwidth signal)
                   if (ctrlMsg.size ()>0 && sciDiscFound)
                     {
@@ -1707,7 +1716,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                           NS_ASSERT_MSG ((*msgIt)->GetMessageType () == LteControlMessage::SCI, "Received " << (*msgIt)->GetMessageType ());
 
                           Ptr<SciLteControlMessage> msg2 = DynamicCast<SciLteControlMessage> (*msgIt);
-                          SciListElement_s sci = msg2->GetSci ();
+                          SciF0ListElement_s sci = msg2->GetSciF0 ();
 
                           std::map<uint16_t, SidelinkGrantInfo>::iterator grantIt = m_slTxPoolInfo.m_currentGrants.find (sci.m_rnti);
                           if (grantIt == m_slTxPoolInfo.m_currentGrants.end ())
@@ -1778,7 +1787,14 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                               else
                                 {
                                   SetSubChannelsForTransmission (slRb);
-                                  m_uplinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, sci.m_groupDstId);
+                                  if(m_v2v)
+                                  {
+                                    m_sidelinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, sci.m_groupDstId);
+                                  }
+                                  else
+                                  {
+                                    m_uplinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, sci.m_groupDstId);
+                                  }
                                 }
                             }
                           else
@@ -1843,7 +1859,14 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                           //0 added to pass by the group Id
                           //to be double checked
                           //
-                          m_uplinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION,0);
+                          if(m_v2v)
+                          {
+                            m_sidelinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION,0);
+                          }
+                          else
+                          {
+                            m_uplinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION,0);
+                          }
 
                           for (std::list<Ptr<LteControlMessage> >::iterator msg = ctrlMsg.begin (); msg != ctrlMsg.end (); ++msg)
                             {
@@ -1863,7 +1886,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                         NS_LOG_LOGIC (this << " UE - SL/UL NOTHING TO SEND");
                       }
                     }
-                  }
+                  //}
               }//end if !m_waitingNextScPeriod
             else
               {
@@ -1911,7 +1934,14 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                       m_txPower = m_powerControl->GetPscchTxPower (dlRb);
                     }
                   SetSubChannelsForTransmission (dlRb);
-                  m_uplinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION,m_slTxPoolInfo.m_currentGrants.begin ()->second.m_grant.m_groupDstId);
+                  if(m_v2v)
+                  {
+                    m_sidelinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION,m_slTxPoolInfo.m_currentGrants.begin ()->second.m_grant.m_groupDstId);
+                  }
+                  else
+                  {
+                    m_uplinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION,m_slTxPoolInfo.m_currentGrants.begin ()->second.m_grant.m_groupDstId);
+                  }
                 }
             }
         }
@@ -1993,6 +2023,7 @@ LteUePhy::DoReset ()
   m_sendSrsEvent.Cancel ();
   m_downlinkSpectrumPhy->Reset ();
   m_uplinkSpectrumPhy->Reset ();
+  m_sidelinkSpectrumPhy->Reset ();
 
 } // end of void LteUePhy::DoReset ()
 
@@ -2432,6 +2463,22 @@ LteUePhy::GetFirstScanningTime ()
   return m_tFirstScanning;
 }
 
+double MeasureRSSI(Ptr<SpectrumValue> p){
+  double rsrp;
+  double rsrpsum = 0.0;
+  uint16_t rsrpnum = 0;
+  Values::const_iterator itPi;
+  for (itPi = p->ConstValuesBegin(); itPi != p->ConstValuesEnd(); itPi++)
+  {
+    if((*itPi))
+    {
+      double powerTxW = ((*itPi) * 180000.0) / 12.0; // convert PSD [W/Hz] to linear power [W]
+      rsrpsum += powerTxW;
+      rsrpnum++;
+    }
+  }
+
+}
 void
 LteUePhy::ReceiveSlss (uint16_t slssid, Ptr<SpectrumValue> p)
 {

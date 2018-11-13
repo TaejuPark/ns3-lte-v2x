@@ -320,17 +320,29 @@ SciLteControlMessage::SciLteControlMessage (void)
 
 
 void
-SciLteControlMessage::SetSci (SciListElement_s sci)
+SciLteControlMessage::SetSciF0 (SciF0ListElement_s sci)
 {
-  m_sci = sci;
+  m_scif0 = sci;
 }
 
-SciListElement_s
-SciLteControlMessage::GetSci ()
+SciF0ListElement_s
+SciLteControlMessage::GetSciF0 ()
 {
-  return m_sci;
+  return m_scif0;
 }
 
+
+void
+SciLteControlMessage::SetSciF1 (SciF1ListElement_s sci)
+{
+  m_scif1 = sci;
+}
+
+SciF1ListElement_s
+SciLteControlMessage::GetSciF1 ()
+{
+  return m_scif1;
+}
 
 // ---------------------------------------------------------------------------
 

@@ -250,6 +250,25 @@ SidelinkCommResourcePool::SetPool (LteRrcSap::SlCommResourcePool pool)
 }
 
 void
+SidelinkCommResourcePool::SetV2XPool (LteRrcSap::SlPreconfigCommPool pool)
+{
+  NS_LOG_FUNCTION (this);
+  //preconfigured pools are always UE selected
+  m_type = SidelinkCommResourcePool::UE_SPS;
+  m_preconfigured = false;
+  //parse information
+  m_scCpLen = pool.scCpLen;
+  m_scPeriod = pool.scPeriod;
+  m_scTfResourceConfig = pool.scTfResourceConfig;
+  m_dataCpLen = pool.dataCpLen;
+  m_dataHoppingConfig = pool.dataHoppingConfig;
+  m_dataTfResourceConfig = pool.dataTfResourceConfig;
+  m_trptSubset = pool.trptSubset;
+
+  Initialize ();
+}
+
+void
 SidelinkCommResourcePool::SetPool (LteRrcSap::SlPreconfigCommPool pool)
 {
   NS_LOG_FUNCTION (this);
@@ -274,6 +293,12 @@ SidelinkCommResourcePool::Initialize ()
   NS_LOG_FUNCTION (this);
   ComputeNumberOfPscchResources ();
   ComputeNumberOfPsschResources ();
+}
+
+uint32_t
+SidelinkCommResourcePool::GetScPeriod ()
+{
+  return PeriodAsInt(m_scPeriod);
 }
 
 SidelinkCommResourcePool::SlPoolType
@@ -337,10 +362,10 @@ SidelinkCommResourcePool::GetPscchTransmissions (uint32_t n)
   std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> trans;
   //36.213 rel 12.5 - 14.2.1.1
   SidelinkCommResourcePool::SidelinkTransmissionInfo first;
-  uint32_t subframe = n % m_lpscch;
+  uint32_t subframe = n % m_lpscch; // ?????? subframe = std:ceil(n % (m_rbpscch/2));
   first.subframe.frameNo = subframe / 10;
   first.subframe.subframeNo = subframe % 10;
-  first.rbStart = std::floor (n / m_lpscch);
+  first.rbStart = std::floor (n / m_lpscch); // ??????
   first.nbRb = 1;
 
   SidelinkCommResourcePool::SidelinkTransmissionInfo second;
@@ -429,6 +454,23 @@ SidelinkCommResourcePool::GetNPscch ()
 {
   NS_LOG_FUNCTION (this);
   return m_nPscchResources;
+}
+
+std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> 
+SidelinkCommResourcePool::GetPsschTransmissionsV2x (std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo m_pscchTx, uint8_t rbLen)
+{
+
+  std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> txInfo;
+  for(std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator txIt = m_psschTx.begin(); txIt != m_psschTx.end(); txIt++)
+  {
+      SidelinkCommResourcePool::SidelinkTransmissionInfo info;
+      info.subframe.frameNo = txIt->subframe.frameNo;
+      info.subframe.subframeNo = txIt->subframe.subframeNo;
+      info.rbStart = rbStart+2; //default value used without frequency hopping.
+      info.nbRb = rbLen;
+      txInfo.push_back (info);
+  }
+  return txInfo;
 }
 
 std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>
@@ -759,6 +801,17 @@ SidelinkCommResourcePool::GetValidAllocations ()
         }
     }
   return allValidRBstartIndexes;
+}
+
+uint8_t
+SidelinkCommResourcePool::GetNSubChannel()
+{
+  return m_nSubChannel;
+}
+uint8_t
+SidelinkCommResourcePool::GetSubChannelRbStartIndex(uint8_t subChannel)
+{
+  return m_subChannelRbIndex.at(subChannel);
 }
 
 SidelinkCommResourcePool::SidelinkTransmissionInfo

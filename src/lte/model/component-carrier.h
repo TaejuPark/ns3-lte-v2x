@@ -76,6 +76,9 @@ public:
    */
   void SetDlBandwidth (uint8_t bw);
 
+  uint8_t GetSlBandwidth () const;
+  void SetSlBandwidth (uint8_t bw);
+
   /**
    * \return the downlink carrier frequency (EARFCN)
    */
@@ -95,6 +98,9 @@ public:
    * \param earfcn the uplink carrier frequency (EARFCN)
    */
   void SetUlEarfcn (uint32_t earfcn);
+
+  uint32_t GetSlEarfcn () const;
+  void SetSlEarfcn (uint32_t earfcn);
 
   /**
    * \brief Returns the CSG ID of the eNodeB.
@@ -156,9 +162,11 @@ public:
 
   uint8_t m_dlBandwidth;   /**< downlink bandwidth in RBs */
   uint8_t m_ulBandwidth;   /**< uplink bandwidth in RBs */
+  uint8_t m_slBandwidth;
 
   uint32_t m_dlEarfcn;    /**< downlink carrier frequency */
   uint32_t m_ulEarfcn;    /**< uplink carrier frequency */
+  uint32_t m_slEarfcn;
 
 protected:
   // inherited from Object

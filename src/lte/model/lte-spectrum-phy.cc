@@ -1112,7 +1112,7 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
                           //Measure S-RSRP
                           if (!m_ltePhyRxSlssCallback.IsNull ())
                             {
-                              m_ltePhyRxSlssCallback (mibSL.slssid, params->psd);
+                              m_ltePhyRxSlssCallback (mibSL.slssid, params->psd); //LteUePhy::ReceiveSlss
                             }
                           //Receive MIB-SL
                           if (m_rxPacketInfo.empty ())
@@ -2058,7 +2058,7 @@ LteSpectrumPhy::EndRxSlData ()
           // Add PSCCH trace.
           NS_ASSERT (m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::SCI);
           Ptr<SciLteControlMessage> msg2 = DynamicCast<SciLteControlMessage> (m_rxPacketInfo[i].m_rxControlMessage);
-          SciListElement_s sci = msg2->GetSci ();
+          SciF0ListElement_s sci = msg2->GetSciF0 ();
 
           SlPhyReceptionStatParameters params;
           params.m_timestamp = Simulator::Now ().GetMilliSeconds ();
