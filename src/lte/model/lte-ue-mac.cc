@@ -1737,10 +1737,13 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           SciF1ListElement_s sci;
           sci.m_priority = 0; // no priority
           sci.m_resReserve = 1; // (1 = 100ms)
-          sci.m_frl = poolIt->second.m_currentGrantV2V.m_rbStart; // frl = frequency resource location
+          sci.m_frl = poolIt->second.m_currentGrantV2V.m_subChannelIndex; // frl = frequency resource location
           sci.m_timeGap = 0; // no retransmission
           sci.m_reIndex = 0;
           sci.m_mcs = poolIt->second.m_currentGrantV2V.m_mcs;
+          sci.m_rbStart = poolIt->second.m_currentGrantV2V.m_rbStart;
+          sci.m_rbLen = poolIt->second.m_currentGrantV2V.m_rbLen;
+          sci.m_tbSize = poolIt->second.m_currentGrantV2V.m_tbSize;
           sci.m_frameNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.frameNo;
           sci.m_subframeNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.subframeNo;
 

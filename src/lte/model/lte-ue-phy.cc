@@ -1182,7 +1182,16 @@ LteUePhy::ReceiveLteControlMessageList (std::list<Ptr<LteControlMessage> > msgLi
         else if (msg->GetMessageType () == LteControlMessage::SCI)
           {
             Ptr<SciLteControlMessage> msg2 = DynamicCast<SciLteControlMessage> (msg);
-            SciF0ListElement_s sci = msg2->GetSciF0 ();
+            SciF1ListElement_s scif1;
+            SciF0ListElement_s scif0;
+            if(m_v2v)
+              {
+                scif1 = msg2->GetSciF1();
+              }
+            else
+              {
+                scif0 = msg2->GetSciF0 ();
+              }
             //must check if the destination is one to monitor
             std::list <uint32_t>::iterator it;
             bool for_me = false;
@@ -1206,18 +1215,30 @@ LteUePhy::ReceiveLteControlMessageList (std::list<Ptr<LteControlMessage> > msgLi
                         if (grantIt == poolIt->m_currentGrants.end ())
                           {
                             SidelinkGrantInfo txInfo;
-
                             txInfo.m_grantReceived = true;
-                            txInfo.m_grant.m_rnti = sci.m_rnti;
-                            txInfo.m_grant.m_resPscch = sci.m_resPscch;
-                            txInfo.m_grant.m_rbStart = sci.m_rbStart;
-                            txInfo.m_grant.m_rbLen = sci.m_rbLen;
-                            txInfo.m_grant.m_hopping = sci.m_hopping;
-                            txInfo.m_grant.m_hoppingInfo = sci.m_hoppingInfo;
-                            txInfo.m_grant.m_trp = sci.m_trp;
-                            txInfo.m_grant.m_groupDstId = sci.m_groupDstId;
-                            txInfo.m_grant.m_mcs = sci.m_mcs;
-                            txInfo.m_grant.m_tbSize = sci.m_tbSize;
+                            
+                            if (m_v2v)
+                              {
+                                txInfo.m_grantV2V.m_subChannelIndex = sci.m_frl;
+                                txInfo.m_grantV2V.m_grantedSubframe.frameNo = sci.m_frameNo;
+                                txInfo.m_grantV2V.m_grantedSubframe.subframeNo = sci.m_subframeNo;
+                                txInfo.m_grantV2V.m_rbStart = sci.m_rbStart;
+                                txInfo.m_grantV2V.m_rbLen = sci.m_rbLen;
+                                txInfo.m_grantV2V.m_tbSize = sci.m_tbSize;
+                              }
+                            else
+                              {
+                                txInfo.m_grant.m_rnti = sci.m_rnti;
+                                txInfo.m_grant.m_resPscch = sci.m_resPscch;
+                                txInfo.m_grant.m_rbStart = sci.m_rbStart;
+                                txInfo.m_grant.m_rbLen = sci.m_rbLen;
+                                txInfo.m_grant.m_hopping = sci.m_hopping;
+                                txInfo.m_grant.m_hoppingInfo = sci.m_hoppingInfo;
+                                txInfo.m_grant.m_trp = sci.m_trp;
+                                txInfo.m_grant.m_groupDstId = sci.m_groupDstId;
+                                txInfo.m_grant.m_mcs = sci.m_mcs;
+                                txInfo.m_grant.m_tbSize = sci.m_tbSize;
+                               }
 
                             //insert grant
                             poolIt->m_currentGrants.insert (std::pair <uint16_t, SidelinkGrantInfo> (sci.m_rnti, txInfo));

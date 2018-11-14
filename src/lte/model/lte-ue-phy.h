@@ -771,6 +771,16 @@ private:
    */
   bool m_chooseFrameAndSubframeRandomly;
 
+struct SidelinkGrantV2V
+{
+  uint8_t m_subChannelIndex;
+  SidelinkCommResourcePool::SubframeInfo m_grantedSubframe;
+  uint8_t m_rbStart;
+  uint8_t m_rbLen;
+  uint8_t m_mcs;
+  uint32_t m_tbSize;
+}
+
   /// Sidelink communication grant related  parameters
  struct SidelinkGrant
  {
@@ -797,6 +807,7 @@ private:
  struct SidelinkGrantInfo
  {
    SidelinkGrant m_grant; ///< Sidelink communication grant
+   SidelinkGrantV2V m_grantV2V;
    std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> m_pscchTx; ///< list of PSCCH transmissions within the pool
    std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> m_psschTx; ///< list of PSSCH transmissions within the pool
    bool m_grantReceived; ///< Flag to indicate the reception of Sidelink communication grant

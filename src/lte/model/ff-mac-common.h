@@ -234,6 +234,9 @@ struct SciF1ListElement_s
 	*	n^start, n^start+1, ..., n^start + L_subch -1 in subframe t_(n-m_timeGap)
 	*	m, m+1, ..., m + L_subch -1 in subframe t_n
 	*/
+        uint8_t m_rbStart; // added for modeling
+        uint8_t m_rbLen; // added for modeling
+        uint32_t m_tbSize; // added for modeling
 	uint8_t m_mcs; ///< MCS
         uint32_t m_frameNo; // added for modeling
         uint32_t m_subframeNo; // added for modeling
