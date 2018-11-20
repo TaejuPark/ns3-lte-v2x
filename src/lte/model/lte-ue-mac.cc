@@ -1748,6 +1748,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           sci.m_tbSize = poolIt->second.m_currentGrantV2V.m_tbSize;
           sci.m_frameNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.frameNo;
           sci.m_subframeNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.subframeNo;
+          sci.m_rnti = m_rnti;
           msg->SetSciF1 (sci);
         }
         else
