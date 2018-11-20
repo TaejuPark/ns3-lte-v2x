@@ -298,7 +298,7 @@ SidelinkCommResourcePool::Initialize ()
 uint32_t
 SidelinkCommResourcePool::GetScPeriod ()
 {
-  return PeriodAsInt(m_scPeriod);
+  return LteRrcSap::PeriodAsInt(m_scPeriod);
 }
 
 SidelinkCommResourcePool::SlPoolType
@@ -457,16 +457,15 @@ SidelinkCommResourcePool::GetNPscch ()
 }
 
 std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> 
-SidelinkCommResourcePool::GetPsschTransmissionsV2x (std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo m_pscchTx, uint8_t rbLen)
+SidelinkCommResourcePool::GetPsschTransmissionsV2X (std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> m_pscchTx, uint8_t rbLen)
 {
-
   std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> txInfo;
-  for(std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator txIt = m_psschTx.begin(); txIt != m_psschTx.end(); txIt++)
+  for(std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator txIt = m_pscchTx.begin(); txIt != m_pscchTx.end(); txIt++)
   {
       SidelinkCommResourcePool::SidelinkTransmissionInfo info;
       info.subframe.frameNo = txIt->subframe.frameNo;
       info.subframe.subframeNo = txIt->subframe.subframeNo;
-      info.rbStart = rbStart+2; //default value used without frequency hopping.
+      info.rbStart = txIt->rbStart+2; //default value used without frequency hopping.
       info.nbRb = rbLen;
       txInfo.push_back (info);
   }

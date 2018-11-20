@@ -201,6 +201,7 @@ struct SciF0ListElement_s
 
 struct SciF1ListElement_s
 {
+        uint16_t m_rnti;
 	uint8_t m_priority; ///< priority
 	uint8_t m_resReserve; ///< resource reservation interval
 	/*
@@ -219,7 +220,7 @@ struct SciF1ListElement_s
 	*	RIV = N_subch * (N_subch - L_subch + 1) + (N_subch - 1 - n^start);
 	*/
 	uint8_t m_timeGap; ///< time gap between initial transmission and retransmission
-	uint8_t m_reIndex ///< retransmission index
+	uint8_t m_reIndex; ///< retransmission index
 	/*
 	* Suppose SCI format 1 transmitted on the PSCCH resource 'm' in subframe 't_n'
 	* if m_timeGap == 0

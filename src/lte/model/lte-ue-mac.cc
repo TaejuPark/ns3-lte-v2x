@@ -406,6 +406,7 @@ LteUeMac::LteUeMac ()
   m_componentCarrierId = 0;
   m_discTxPool.m_nextDiscPeriod.frameNo = 0;
   m_discTxPool.m_nextDiscPeriod.subframeNo = 0;
+  m_v2v = true;
 }
 
 
@@ -1494,7 +1495,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
 
                 grantV2V.m_grantedSubframe = ultimateSubframe;
                 grantV2V.m_subChannelIndex = m_ueSelectedUniformVariable->GetInteger (0, poolIt->second.m_pool->GetNSubChannel());
-                grantV2V.m_rbStart = poolIt->second.m_pool->GetSubChannelRbStartIndex(pickedSubChannel);
+                grantV2V.m_rbStart = poolIt->second.m_pool->GetSubChannelRbStartIndex(grantV2V.m_subChannelIndex);
                 grantV2V.m_rbLen = m_slGrantSize; // 2 Rbs for SCI (m_slGrantSize = 2)
                 grantV2V.m_mcs = m_slGrantMcs;
                 grantV2V.m_tbSize = 0; //computed later
@@ -1596,6 +1597,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
             }            
           }
           //make the grant our current grant
+          SlUeMacStatParameters stats_params;
           if(m_v2v)
           {
             poolIt->second.m_currentGrantV2V = poolIt->second.m_nextGrantV2V;
@@ -1626,7 +1628,6 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
             subFrameInfo.subframeNo = poolIt->second.m_currentScPeriod.subframeNo - 1;
 
             // Collect statistics for SL UE mac scheduling trace
-            SlUeMacStatParameters stats_params;
             stats_params.m_frameNo = subFrameInfo.frameNo + 1;
             stats_params.m_subframeNo = subFrameInfo.subframeNo + 1;
             stats_params.m_pscchRi = poolIt->second.m_currentGrant.m_resPscch;
@@ -1706,7 +1707,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           }
 
           //clear the grant
-          poolIt->second.m_prevGrantV2V = m_currentGrantV2V;
+          poolIt->second.m_prevGrantV2V = poolIt->second.m_currentGrantV2V;
           poolIt->second.m_grantReceived = false;
         } //end of if (poolIt->second.m_grantReceived)
       }
@@ -1731,6 +1732,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
         {
           NS_LOG_INFO ("Second PSCCH transmission");
         }
+        Ptr<SciLteControlMessage> msg = Create<SciLteControlMessage> ();
         if(m_v2v)
         {
           // create SCI format 1 message
@@ -1746,8 +1748,6 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           sci.m_tbSize = poolIt->second.m_currentGrantV2V.m_tbSize;
           sci.m_frameNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.frameNo;
           sci.m_subframeNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.subframeNo;
-
-          Ptr<SciLteControlMessage> msg = Create<SciLteControlMessage> ();
           msg->SetSciF1 (sci);
         }
         else
@@ -1764,8 +1764,6 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           sci.m_hopping = poolIt->second.m_currentGrant.m_hopping;
           sci.m_hoppingInfo = poolIt->second.m_currentGrant.m_hoppingInfo;
           sci.m_groupDstId = (poolIt->first & 0xFF);
-
-          Ptr<SciLteControlMessage> msg = Create<SciLteControlMessage> ();
           msg->SetSciF0 (sci);
         }
 

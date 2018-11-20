@@ -552,13 +552,14 @@ LteHelper::InstallUeDevice (NodeContainer c)
   for (NodeContainer::Iterator i = c.Begin (); i != c.End (); ++i)
     {
       Ptr<Node> node = *i;
+      Ptr<NetDevice> device;
       if(m_v2v)
       {
-        Ptr<NetDevice> device = InstallSingleVueDevice (node);
+        device = InstallSingleVueDevice (node);
       }
       else
       {
-        Ptr<NetDevice> device = InstallSingleUeDevice (node);
+        device = InstallSingleUeDevice (node);
       }
       devices.Add (device);
     }
@@ -838,16 +839,16 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n)
   cc->SetAsPrimary(true);
   Ptr<LteUeMac> mac = CreateObject<LteUeMac> ();
   cc->SetMac (mac);
-  ueCcMap.insert(std::pair<uint8_t, Ptr<ComponentCarrierUe>> (0, cc);
+  ueCcMap.insert(std::pair<uint8_t, Ptr<ComponentCarrierUe>> (0, cc));
     
   for(std::map<uint8_t, Ptr<ComponentCarrierUe>>::iterator it = ueCcMap.begin(); it != ueCcMap.end(); ++it)
   {
     Ptr<LteSpectrumPhy> slPhy = CreateObject<LteSpectrumPhy> (); // only sidelink
-    slPhy->SetAtrribute("HalfDuplexPhy", PointerValue(slPhy)); // pointer to sl spectrumphy
+    slPhy->SetAttribute("HalfDuplexPhy", PointerValue(slPhy)); // pointer to sl spectrumphy
 
     //TODO: Ptr<LteUePhy> phy = CreateObject<LteUePhy> (dlPhy, ulPhy);
     Ptr<LteUePhy> phy = CreateObject<LteUePhy> (slPhy, slPhy);
-    slPhy->SetSlSpectrumPhy(slPhy);
+    phy->SetSlSpectrumPhy(slPhy);
           
     Ptr<LteSlChunkProcessor> pSlSinr = Create<LteSlChunkProcessor> ();
     pSlSinr->AddCallback (MakeCallback (&LteSpectrumPhy::UpdateSlSinrPerceived, slPhy));
@@ -864,7 +865,7 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n)
     slPhy->SetChannel(m_slChannel);
 
     Ptr<MobilityModel> mm = n->GetObject<MobilityModel> ();
-    slPhy->SetMobiliity(mm);
+    slPhy->SetMobility(mm);
 
     Ptr<AntennaModel> antenna = (m_ueAntennaModelFactory.Create ())->GetObject<AntennaModel> ();
     slPhy->SetAntenna (antenna);
@@ -1658,7 +1659,7 @@ LteHelper::DoDeActivateDedicatedEpsBearer (Ptr<NetDevice> ueDevice, Ptr<NetDevic
 void
 LteHelper::DoSlComponentCarrierConfigure (uint32_t slEarfcn, uint8_t slbw)
 {
-  std::map<uint8_t, Ptr<ComponenetCarrier>::iterator it = m_componenetCarrierPhyParams.begin();
+  std::map<uint8_t, ComponentCarrier>::iterator it = m_componentCarrierPhyParams.begin();
   it->second.SetSlBandwidth(slbw);
   it->second.SetSlEarfcn(slEarfcn);
 }

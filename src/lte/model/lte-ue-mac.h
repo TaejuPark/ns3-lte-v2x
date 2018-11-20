@@ -361,6 +361,8 @@ private:
   /// component carrier Id --> used to address sap
   uint8_t m_componentCarrierId;
 
+  bool m_v2v;
+
 private:
 
   /// LcInfo structure
@@ -435,7 +437,7 @@ private:
     uint8_t m_rbLen;
     uint8_t m_mcs;
     uint32_t m_tbSize;
-  }
+  };
 
   /// Sidelink grant related variables
   struct SidelinkGrant

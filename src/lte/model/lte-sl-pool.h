@@ -107,7 +107,7 @@ public:
   struct SidelinkTransmissionInfo
   {
     SubframeInfo subframe; ///< The time of the transmission
-    uint8_t subChannelIdx // The start index of subchannel used by the transmission
+    uint8_t subChannelIdx; // The start index of subchannel used by the transmission
     uint8_t rbStart; ///< The index of the PRB where the transmission occurs
     uint8_t nbRb; ///< The number of PRBs used by the transmission
   };
@@ -138,7 +138,10 @@ public:
    * \return true if this configuration is the same as the other one
    */
   bool operator== (const SidelinkCommResourcePool& other);
-
+ 
+  void SetV2XPool (LteRrcSap::SlCommResourcePool pool);
+  void SetV2XPool (LteRrcSap::SlPreconfigCommPool pool);
+  
   /**
    * Configure the pool using the content of the RRC message
    * Parsing the message will indicate whether it is a scheduled or UE selected pool
@@ -208,6 +211,7 @@ public:
    */
   uint32_t GetNPscch ();
 
+  std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> GetPsschTransmissionsV2X (std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> m_pscchTx, uint8_t rbLen);
   /**
    * Returns the subframes and RBs associated with the transmission on PSSCH
    * \param periodStart The first subframe in the Sidelink period
@@ -243,7 +247,7 @@ public:
   */
   std::vector< std::vector<uint8_t> > GetValidAllocations ();
 
-  uint8_t GetNSubchannel();
+  uint8_t GetNSubChannel();
   uint8_t GetSubChannelRbStartIndex(uint8_t subChannel);
 protected:
   /**
@@ -333,7 +337,7 @@ private:
   void ComputeNumberOfPsschResources ();
 
   uint8_t m_nSubChannel; // the number of subchannel in a subframe
-  std::vector <uint8_t> m_subChannelRbIndex // the index of PRBs where each subchannel start
+  std::vector <uint8_t> m_subChannelRbIndex; // the index of PRBs where each subchannel start
   uint8_t m_reserveCount;
   
   /**
@@ -389,6 +393,9 @@ public:
    */
   static TypeId GetTypeId (void);
 
+
+  void SetV2XPool (LteRrcSap::SlCommResourcePool pool);
+  void SetV2XPool (LteRrcSap::SlPreconfigCommPool pool);
 
   /**
    * Configure the pool using the content of the RRC message

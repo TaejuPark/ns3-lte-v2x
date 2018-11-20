@@ -779,7 +779,7 @@ struct SidelinkGrantV2V
   uint8_t m_rbLen;
   uint8_t m_mcs;
   uint32_t m_tbSize;
-}
+};
 
   /// Sidelink communication grant related  parameters
  struct SidelinkGrant

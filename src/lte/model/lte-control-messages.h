@@ -464,7 +464,7 @@ public:
 
 private:
   SciF0ListElement_s m_scif0; ///< Sidelink control information message
-  SciF1ListElement_s m_scif1
+  SciF1ListElement_s m_scif1;
 };
 
 /**

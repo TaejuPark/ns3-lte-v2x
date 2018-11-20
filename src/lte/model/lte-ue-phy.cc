@@ -1197,9 +1197,9 @@ LteUePhy::ReceiveLteControlMessageList (std::list<Ptr<LteControlMessage> > msgLi
             bool for_me = false;
             for (it = m_destinations.begin (); it != m_destinations.end () && !for_me; it++)
               {
-                if (sci.m_groupDstId == ((*it) & 0xFF))
+                if (m_v2v || (!m_v2v && scif0.m_groupDstId == ((*it) & 0xFF)))
                   {
-                    NS_LOG_INFO ("received SCI for group " << (uint32_t)((*it) & 0xFF) << " from rnti " << sci.m_rnti);
+                    //NS_LOG_INFO ("received SCI for group " << (uint32_t)((*it) & 0xFF) << " from rnti " << sci.m_rnti);
 
                     //todo, how to find the pool among the available ones?
                     //right now just use the first one
@@ -1211,7 +1211,15 @@ LteUePhy::ReceiveLteControlMessageList (std::list<Ptr<LteControlMessage> > msgLi
                     else
                       {
                         //this is the first transmission of PSCCH
-                        std::map<uint16_t, SidelinkGrantInfo>::iterator grantIt = poolIt->m_currentGrants.find (sci.m_rnti);
+                        std::map<uint16_t, SidelinkGrantInfo>::iterator grantIt;
+                        if(m_v2v)
+                          {
+                            grantIt = poolIt->m_currentGrants.find (scif1.m_rnti);
+                          }
+                        else
+                          {
+                            grantIt = poolIt->m_currentGrants.find (scif0.m_rnti);
+                          }
                         if (grantIt == poolIt->m_currentGrants.end ())
                           {
                             SidelinkGrantInfo txInfo;
@@ -1219,29 +1227,29 @@ LteUePhy::ReceiveLteControlMessageList (std::list<Ptr<LteControlMessage> > msgLi
                             
                             if (m_v2v)
                               {
-                                txInfo.m_grantV2V.m_subChannelIndex = sci.m_frl;
-                                txInfo.m_grantV2V.m_grantedSubframe.frameNo = sci.m_frameNo;
-                                txInfo.m_grantV2V.m_grantedSubframe.subframeNo = sci.m_subframeNo;
-                                txInfo.m_grantV2V.m_rbStart = sci.m_rbStart;
-                                txInfo.m_grantV2V.m_rbLen = sci.m_rbLen;
-                                txInfo.m_grantV2V.m_tbSize = sci.m_tbSize;
+                                txInfo.m_grantV2V.m_subChannelIndex = scif1.m_frl;
+                                txInfo.m_grantV2V.m_grantedSubframe.frameNo = scif1.m_frameNo;
+                                txInfo.m_grantV2V.m_grantedSubframe.subframeNo = scif1.m_subframeNo;
+                                txInfo.m_grantV2V.m_rbStart = scif1.m_rbStart;
+                                txInfo.m_grantV2V.m_rbLen = scif1.m_rbLen;
+                                txInfo.m_grantV2V.m_tbSize = scif1.m_tbSize;
+                                poolIt->m_currentGrants.insert (std::pair <uint16_t, SidelinkGrantInfo> (scif1.m_rnti, txInfo));
                               }
                             else
                               {
-                                txInfo.m_grant.m_rnti = sci.m_rnti;
-                                txInfo.m_grant.m_resPscch = sci.m_resPscch;
-                                txInfo.m_grant.m_rbStart = sci.m_rbStart;
-                                txInfo.m_grant.m_rbLen = sci.m_rbLen;
-                                txInfo.m_grant.m_hopping = sci.m_hopping;
-                                txInfo.m_grant.m_hoppingInfo = sci.m_hoppingInfo;
-                                txInfo.m_grant.m_trp = sci.m_trp;
-                                txInfo.m_grant.m_groupDstId = sci.m_groupDstId;
-                                txInfo.m_grant.m_mcs = sci.m_mcs;
-                                txInfo.m_grant.m_tbSize = sci.m_tbSize;
-                               }
+                                txInfo.m_grant.m_rnti = scif0.m_rnti;
+                                txInfo.m_grant.m_resPscch = scif0.m_resPscch;
+                                txInfo.m_grant.m_rbStart = scif0.m_rbStart;
+                                txInfo.m_grant.m_rbLen = scif0.m_rbLen;
+                                txInfo.m_grant.m_hopping = scif0.m_hopping;
+                                txInfo.m_grant.m_hoppingInfo = scif0.m_hoppingInfo;
+                                txInfo.m_grant.m_trp = scif0.m_trp;
+                                txInfo.m_grant.m_groupDstId = scif0.m_groupDstId;
+                                txInfo.m_grant.m_mcs = scif0.m_mcs;
+                                txInfo.m_grant.m_tbSize = scif0.m_tbSize;
+                                poolIt->m_currentGrants.insert (std::pair <uint16_t, SidelinkGrantInfo> (scif0.m_rnti, txInfo));
+                              }
 
-                            //insert grant
-                            poolIt->m_currentGrants.insert (std::pair <uint16_t, SidelinkGrantInfo> (sci.m_rnti, txInfo));
                           } //else it should be the retransmission and the data should be the same...add check
                         else
                           {
@@ -2484,6 +2492,7 @@ LteUePhy::GetFirstScanningTime ()
   return m_tFirstScanning;
 }
 
+/*
 double MeasureRSSI(Ptr<SpectrumValue> p){
   double rsrp;
   double rsrpsum = 0.0;
@@ -2498,8 +2507,9 @@ double MeasureRSSI(Ptr<SpectrumValue> p){
       rsrpnum++;
     }
   }
-
 }
+*/
+
 void
 LteUePhy::ReceiveSlss (uint16_t slssid, Ptr<SpectrumValue> p)
 {

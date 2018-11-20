@@ -819,6 +819,7 @@ public:
    * \param slConfiguration The Sidelink configuration
    */
   void InstallSidelinkConfiguration (Ptr<NetDevice> ueDevice, Ptr<LteSlUeRrc> slConfiguration);
+  void SetV2VMode (bool b);
 
 
 protected:
@@ -881,8 +882,6 @@ private:
    *  time when a manual bearer de-activation is desired by the simulation user.
    */
   void DoDeActivateDedicatedEpsBearer (Ptr<NetDevice> ueDevice, Ptr<NetDevice> enbDevice, uint8_t bearerId);
-
-  void SetV2VMode (bool b);
 
   /// Function that performs a channel model initialization of all component carriers
   void ChannelModelInitialization (void);
