@@ -2284,6 +2284,67 @@ LteSpectrumPhy::SetTxModeGain (uint8_t txMode, double gain)
   }
 }
 
+std::vector<std::vector<double>>
+LteSpectrumPhy::GetRssiMap ()
+{
+  NS_LOG_FUNCTION (this);
+  return m_rssiMap;
+}
+
+void
+LteSpectrumPhy::UpdateRssiMap ()
+{
+  if (m_rssiMap.size()==0)
+    {
+      // Create RSSI Map
+      for (int subChannel = 0; subChannel < 5; subChannel++)
+        {
+          std::vector<double> temp;
+          m_rssiMap.push_back(temp);
+          for (int subFrame = 0; subFrame < 1000; subFrame++)
+            {
+              m_rssiMap[subChannel].push_back(0);
+            }
+        }
+    }
+  else
+    {
+      uint16_t rbNum = 0;
+      double rssiSum = 0.0;
+      double rssi = 0.0;
+      
+      for (unsigned int index = 0; index < m_slSignalPerceived.size(); index++)
+        {
+          Values::const_iterator itIntN = m_slInterferencePerceived[index].ConstValuesBegin ();
+          Values::const_iterator itPj = m_slSignalPerceived[index].ConstValuesBegin ();
+          for(itPj = m_slSignalPerceived[index].ConstValuesBegin ();
+              itPj != m_slSignalPerceived[index].ConstValuesEnd ();
+              itIntN++, itPj++)
+            {
+              rbNum++;
+              double interfPlusNoisePowerTxW = ((*itIntN) * 180000.0) / 12.0;
+              double signalPowerTxW = ((*itPj) * 180000.0) / 12.0;
+              rssiSum += (2 * (interfPlusNoisePowerTxW + signalPowerTxW));
+            }
+          
+          //TODO: How to get subChannel and subFrame information from signal.
+          int subChannel = 0;
+          int subFrame = 0;
+
+          if(subFrame >= 1000)
+            {
+              subFrame -= 1000;          
+            }
+          
+          rssi = rssiSum / (double)rbNum;
+          if (m_rssiMap[subChannel][subFrame] < rssiSum/rssi)
+            {
+              m_rssiMap[subChannel][subFrame] = rssiSum / rssi;
+            }
+        }
+    }
+}
+
 double
 LteSpectrumPhy::GetMeanSinr (const SpectrumValue& sinr, const std::vector<int>& map)
 {

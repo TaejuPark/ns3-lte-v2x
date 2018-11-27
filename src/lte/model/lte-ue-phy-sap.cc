@@ -34,5 +34,12 @@ LteUePhySapUser::~LteUePhySapUser ()
 {
 }
 
+std::vector<std::vector<double>>
+LteUePhySapProvider::GetRssiMap ()
+{
+  std::vector<std::vector<double>> temp;
+  return temp;
+}
+
 
 } // namespace ns3

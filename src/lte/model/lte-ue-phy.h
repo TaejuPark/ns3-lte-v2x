@@ -578,6 +578,7 @@ private:
     void DoRemoveSlDestination (uint32_t destination);
 
   // UE PHY SAP methods 
+  virtual std::vector<std::vector<double>> DoGetRssiMap ();
   virtual void DoSendMacPdu (Ptr<Packet> p);
   /**
    * Send LTE control message function

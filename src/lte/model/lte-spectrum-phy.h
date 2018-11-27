@@ -698,6 +698,8 @@ public:
    * \param retx The number of retransmissions
    */
   void SetDiscNumRetx (uint8_t retx);
+  
+  std::vector<std::vector<double>> GetRssiMap ();
 
   /**
   * TracedCallback signature for TB drop.
@@ -752,6 +754,8 @@ private:
    */
   void SetSlRxGain (double gain);
 
+  void UpdateRssiMap ();
+  
   /**
    * \brief Get mean SINR function
    *
@@ -811,6 +815,8 @@ private:
 
   Ptr<LteInterference> m_interferenceData; ///< the data interference
   Ptr<LteInterference> m_interferenceCtrl; ///< the control interference
+
+  std::vector<std::vector<double>> m_rssiMap; // rssi map for 5 sub-channel, 100 subframe in a SC period.
 
   uint16_t m_cellId; ///< the cell ID
   

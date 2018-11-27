@@ -1478,6 +1478,8 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
               {
                 poolIt->second.m_reserveCount = m_ueSelectedUniformVariable->GetInteger(5, 15);
                 // pick a random subChannel for transmission
+                // TODO: implement SPS with rssiMap;
+                std::vector<std::vector<double>> rssiMap =  m_uePhySapProvider->GetRssiMap();
                 uint32_t subframe = m_ueSelectedUniformVariable->GetInteger(0, poolIt->second.m_pool->GetScPeriod());
                 
                 SidelinkCommResourcePool::SubframeInfo relativeSubframe;

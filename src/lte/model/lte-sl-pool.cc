@@ -223,6 +223,7 @@ SidelinkCommResourcePool::SetPool (LteRrcSap::SlCommResourcePool pool)
   m_scTfResourceConfig = pool.scTfResourceConfig;
   m_dataCpLen = pool.dataCpLen;
   m_dataHoppingConfig = pool.dataHoppingConfig;
+  m_nSubChannel = 5;
 
   if (pool.haveUeSelectedResourceConfig)
     {
