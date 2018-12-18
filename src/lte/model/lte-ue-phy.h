@@ -774,6 +774,7 @@ private:
 
 struct SidelinkGrantV2V
 {
+  uint16_t m_rnti;
   uint8_t m_subChannelIndex;
   SidelinkCommResourcePool::SubframeInfo m_grantedSubframe;
   uint8_t m_rbStart;

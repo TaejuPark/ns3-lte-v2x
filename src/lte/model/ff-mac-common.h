@@ -241,6 +241,7 @@ struct SciF1ListElement_s
 	uint8_t m_mcs; ///< MCS
         uint32_t m_frameNo; // added for modeling
         uint32_t m_subframeNo; // added for modeling
+        uint8_t m_groupDstId;
 };
  
 /**

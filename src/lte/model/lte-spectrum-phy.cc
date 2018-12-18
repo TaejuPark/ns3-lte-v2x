@@ -273,6 +273,21 @@ LteSpectrumPhy::LteSpectrumPhy ()
     {
       m_txModeGain.push_back (1.0);
     }
+  
+  if (m_rssiMap.size()==0)
+    {
+      // Create RSSI Map
+      NS_LOG_LOGIC("Create RSSI Map");
+      for (int subChannel = 0; subChannel < 5; subChannel++)
+        {
+          std::vector<double> temp;
+          m_rssiMap.push_back(temp);
+          for (int subFrame = 0; subFrame < 1000; subFrame++)
+            {
+              m_rssiMap[subChannel].push_back(0.0);
+            }
+        }
+    }
 }
 
 
@@ -725,7 +740,7 @@ LteSpectrumPhy::StartTxDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteControlM
 bool
 LteSpectrumPhy::StartTxSlDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteControlMessage> > ctrlMsgList, Time duration, uint8_t groupId)
 {
-  NS_LOG_FUNCTION (this << pb << " ID:" << GetDevice()->GetNode()->GetId() << " State: " << m_state);
+  NS_LOG_DEBUG (this << pb << " ID:" << GetDevice()->GetNode()->GetId() << " State: " << m_state);
 
   m_phyTxStartTrace (pb);
 
@@ -771,6 +786,7 @@ LteSpectrumPhy::StartTxSlDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteContro
       txParams->ctrlMsgList = ctrlMsgList;
       m_ulDataSlCheck = true;
 
+      NS_LOG_DEBUG("StartTx on Spectrum Channel");
       m_channel->StartTx (txParams);
       m_endTxEvent = Simulator::Schedule (duration, &LteSpectrumPhy::EndTxData, this);
     }
@@ -938,7 +954,7 @@ LteSpectrumPhy::EndTxUlSrs ()
 void
 LteSpectrumPhy::StartRx (Ptr<SpectrumSignalParameters> spectrumRxParams)
 {
-  NS_LOG_FUNCTION (this << spectrumRxParams << " State: " << m_state);
+  NS_LOG_DEBUG (this << spectrumRxParams << " State: " << m_state);
 
   Ptr <const SpectrumValue> rxPsd = spectrumRxParams->psd;
   Time duration = spectrumRxParams->duration;
@@ -1072,7 +1088,7 @@ LteSpectrumPhy::StartRxData (Ptr<LteSpectrumSignalParametersDataFrame> params)
 void
 LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
 {
-  NS_LOG_LOGIC (this <<" Cell ID: "<<m_cellId<<" Node ID: " << GetDevice()->GetNode()->GetId() << " State: " << m_state);
+  NS_LOG_DEBUG (this <<" Cell ID: "<<m_cellId<<" Node ID: " << GetDevice()->GetNode()->GetId() << " State: " << m_state);
 
   switch (m_state)
     {
@@ -1100,6 +1116,7 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
               //Checking if it is a SLSS, and if it is: measure S-RSRP and receive MIB-SL
               if (params->ctrlMsgList.size () >0)
                 {
+                  NS_LOG_DEBUG ("ctrlMsgList.size() > 0");
                   std::list<Ptr<LteControlMessage> >::iterator ctrlIt;
                   for (ctrlIt=params->ctrlMsgList.begin() ; ctrlIt != params->ctrlMsgList.end(); ctrlIt++)
                     {
@@ -1163,8 +1180,10 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
               //Receive PSCCH, PSSCH and PSDCH only if synchronized to the transmitter (having the same SLSSID)
               //and belonging to the destination group
 
+              NS_LOG_DEBUG("params->slssId="<<params->slssId<<", m_slssId="<<m_slssId<<", params->groupId="<<params->groupId); 
               if (params->slssId == m_slssId && (params->groupId == 0 || m_l1GroupIds.find (params->groupId) != m_l1GroupIds.end()))
                 {
+                  NS_LOG_DEBUG("Synchronized to transmitter. Already ready to receive PSCCH, PSSCH");
                   if (m_rxPacketInfo.empty ())
                     {
                       NS_ASSERT (m_state == IDLE);
@@ -1201,7 +1220,7 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
                     {
                       if (*it != 0)
                         {
-                          NS_LOG_INFO ("SL Message arriving on RB " << i);
+                          NS_LOG_DEBUG ("SL Message arriving on RB " << i);
                           rbMap.push_back (i);
                         }
                     }
@@ -1217,7 +1236,7 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
                 }
               else
                 {
-                  NS_LOG_LOGIC ("Not in sync with this Sidelink signal... Ignoring ");
+                  NS_LOG_DEBUG ("Not in sync with this Sidelink signal... Ignoring ");
                 }
             }
           else
@@ -2294,53 +2313,33 @@ LteSpectrumPhy::GetRssiMap ()
 void
 LteSpectrumPhy::UpdateRssiMap ()
 {
-  if (m_rssiMap.size()==0)
-    {
-      // Create RSSI Map
-      for (int subChannel = 0; subChannel < 5; subChannel++)
-        {
-          std::vector<double> temp;
-          m_rssiMap.push_back(temp);
-          for (int subFrame = 0; subFrame < 1000; subFrame++)
-            {
-              m_rssiMap[subChannel].push_back(0);
-            }
-        }
-    }
-  else
-    {
-      uint16_t rbNum = 0;
-      double rssiSum = 0.0;
-      double rssi = 0.0;
+  uint16_t rbNum = 0;
+  double rssiSum = 0.0;
+  double rssi = 0.0;
       
-      for (unsigned int index = 0; index < m_slSignalPerceived.size(); index++)
+  for (unsigned int index = 0; index < m_slSignalPerceived.size(); index++)
+    {
+      Values::const_iterator itIntN = m_slInterferencePerceived[index].ConstValuesBegin ();
+      Values::const_iterator itPj = m_slSignalPerceived[index].ConstValuesBegin ();
+      for(itPj = m_slSignalPerceived[index].ConstValuesBegin ();
+          itPj != m_slSignalPerceived[index].ConstValuesEnd ();
+          itIntN++, itPj++)
         {
-          Values::const_iterator itIntN = m_slInterferencePerceived[index].ConstValuesBegin ();
-          Values::const_iterator itPj = m_slSignalPerceived[index].ConstValuesBegin ();
-          for(itPj = m_slSignalPerceived[index].ConstValuesBegin ();
-              itPj != m_slSignalPerceived[index].ConstValuesEnd ();
-              itIntN++, itPj++)
-            {
-              rbNum++;
-              double interfPlusNoisePowerTxW = ((*itIntN) * 180000.0) / 12.0;
-              double signalPowerTxW = ((*itPj) * 180000.0) / 12.0;
-              rssiSum += (2 * (interfPlusNoisePowerTxW + signalPowerTxW));
-            }
+          rbNum++;
+          double interfPlusNoisePowerTxW = ((*itIntN) * 180000.0) / 12.0;
+          double signalPowerTxW = ((*itPj) * 180000.0) / 12.0;
+          rssiSum += (2 * (interfPlusNoisePowerTxW + signalPowerTxW));
+        }
+         
+      //TODO: How to get subChannel and subFrame information from signal.
+      // To get subChannel information, signal should have subchannel information.
+      int subChannel = 0;
+      int64_t subFrame = Simulator::Now ().GetMilliSeconds () % 1000;
           
-          //TODO: How to get subChannel and subFrame information from signal.
-          int subChannel = 0;
-          int subFrame = 0;
-
-          if(subFrame >= 1000)
-            {
-              subFrame -= 1000;          
-            }
-          
-          rssi = rssiSum / (double)rbNum;
-          if (m_rssiMap[subChannel][subFrame] < rssiSum/rssi)
-            {
-              m_rssiMap[subChannel][subFrame] = rssiSum / rssi;
-            }
+      rssi = rssiSum / (double)rbNum;
+      if (m_rssiMap[subChannel][subFrame] < rssi)
+        {
+          m_rssiMap[subChannel][subFrame] = rssi;
         }
     }
 }

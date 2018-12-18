@@ -844,11 +844,12 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n)
   for(std::map<uint8_t, Ptr<ComponentCarrierUe>>::iterator it = ueCcMap.begin(); it != ueCcMap.end(); ++it)
   {
     Ptr<LteSpectrumPhy> slPhy = CreateObject<LteSpectrumPhy> (); // only sidelink
-    slPhy->SetAttribute("HalfDuplexPhy", PointerValue(slPhy)); // pointer to sl spectrumphy
+    //slPhy->SetAttribute("HalfDuplexPhy", PointerValue(slPhy)); // pointer to sl spectrumphy
 
     //TODO: Ptr<LteUePhy> phy = CreateObject<LteUePhy> (dlPhy, ulPhy);
     Ptr<LteUePhy> phy = CreateObject<LteUePhy> (slPhy, slPhy);
     phy->SetSlSpectrumPhy(slPhy);
+    slPhy->SetAttribute("HalfDuplexPhy", PointerValue(slPhy)); // pointer to sl spectrumphy
           
     Ptr<LteSlChunkProcessor> pSlSinr = Create<LteSlChunkProcessor> ();
     pSlSinr->AddCallback (MakeCallback (&LteSpectrumPhy::UpdateSlSinrPerceived, slPhy));

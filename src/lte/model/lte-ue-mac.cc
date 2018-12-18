@@ -950,7 +950,8 @@ LteUeMac::DoAddSlCommTxPool (uint32_t dstL2Id, Ptr<SidelinkTxCommResourcePool> p
   NS_ABORT_MSG_IF (info.m_nextScPeriod.frameNo > 1024 || info.m_nextScPeriod.subframeNo > 10,
                    "Invalid frame or subframe number");
   info.m_grantReceived = false;
-
+  info.m_reserveCount = (uint32_t) 0;
+  NS_LOG_DEBUG(this << " set m_reserveCount = " << (uint32_t) info.m_reserveCount);
   m_sidelinkTxPoolsMap.insert (std::pair<uint32_t, PoolInfo > (dstL2Id, info));
 }
 
@@ -1285,7 +1286,7 @@ LteUeMac::RefreshHarqProcessesPacketBuffer (void)
 void
 LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
 {
-  NS_LOG_FUNCTION (this);
+  NS_LOG_DEBUG (this << " Current frameNo: " << frameNo << " Current subframeNo: "<< subframeNo);
   m_frameNo = frameNo;
   m_subframeNo = subframeNo;
   RefreshHarqProcessesPacketBuffer ();
@@ -1314,7 +1315,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
       subframeNo = subframeNo + UL_PUSCH_TTIS_DELAY;
     }
 
-    NS_LOG_INFO ("Adjusted Frame no. " << frameNo << " Subframe no. " << subframeNo);
+    NS_LOG_DEBUG ("Adjusted Frame no. " << frameNo << " Subframe no. " << subframeNo);
 
     //Sidelink Discovery
     if (m_discTxApps.size () > 0)
@@ -1425,7 +1426,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
         //adjust because scheduler starts with frame/subframe = 1
         poolIt->second.m_nextScPeriod.frameNo++;
         poolIt->second.m_nextScPeriod.subframeNo++;
-        NS_LOG_INFO ("Starting new SC period for pool of group " << poolIt->first << ". Next period at "
+        NS_LOG_DEBUG ("Starting new SC period for pool of group " << poolIt->first << ". Next period at "
                                                                  << poolIt->second.m_nextScPeriod.frameNo << "/" << poolIt->second.m_nextScPeriod.subframeNo);
         NS_ABORT_MSG_IF (poolIt->second.m_nextScPeriod.frameNo > 1024 || poolIt->second.m_nextScPeriod.subframeNo > 10,
                          "Invalid frame or subframe number");
@@ -1472,15 +1473,18 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           {
             if(m_v2v) // Mode3
             {
-              NS_LOG_DEBUG ("SL BSR size =" << m_slBsrReceived.size ());
+              NS_LOG_INFO ("SL BSR size =" << m_slBsrReceived.size ());
               SidelinkGrantV2V grantV2V;
+              NS_LOG_DEBUG (this << " m_reserveCount = " << (uint32_t) poolIt->second.m_reserveCount);
               if(poolIt->second.m_reserveCount==0)
               {
-                poolIt->second.m_reserveCount = m_ueSelectedUniformVariable->GetInteger(5, 15);
+                poolIt->second.m_reserveCount = (uint32_t) m_ueSelectedUniformVariable->GetInteger(5, 15);
+                NS_LOG_DEBUG (this << "updated m_reserveCount = " << (uint32_t) poolIt->second.m_reserveCount);
                 // pick a random subChannel for transmission
                 // TODO: implement SPS with rssiMap;
                 std::vector<std::vector<double>> rssiMap =  m_uePhySapProvider->GetRssiMap();
-                uint32_t subframe = m_ueSelectedUniformVariable->GetInteger(0, poolIt->second.m_pool->GetScPeriod());
+                NS_LOG_INFO ("Succeed getting RSSI Map");
+                uint32_t subframe = m_ueSelectedUniformVariable->GetInteger(0, poolIt->second.m_pool->GetScPeriod()-1);
                 
                 SidelinkCommResourcePool::SubframeInfo relativeSubframe;
                 SidelinkCommResourcePool::SubframeInfo ultimateSubframe;
@@ -1494,10 +1498,14 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                   ultimateSubframe.frameNo++;
                   ultimateSubframe.subframeNo -= 10;
                 }
-
+                NS_LOG_DEBUG("Assigned frameNo: " << ultimateSubframe.frameNo << " subframeNo: " << ultimateSubframe.subframeNo);
                 grantV2V.m_grantedSubframe = ultimateSubframe;
-                grantV2V.m_subChannelIndex = m_ueSelectedUniformVariable->GetInteger (0, poolIt->second.m_pool->GetNSubChannel());
+                grantV2V.m_subChannelIndex = m_ueSelectedUniformVariable->GetInteger (0, poolIt->second.m_pool->GetNSubChannel()-1);
+
+                NS_LOG_INFO("Succeed to get m_subChannelIndex for v2v transmit grant"); 
                 grantV2V.m_rbStart = poolIt->second.m_pool->GetSubChannelRbStartIndex(grantV2V.m_subChannelIndex);
+
+                NS_LOG_INFO("Succeed to get m_rbStart for v2v transmit grant");
                 grantV2V.m_rbLen = m_slGrantSize; // 2 Rbs for SCI (m_slGrantSize = 2)
                 grantV2V.m_mcs = m_slGrantMcs;
                 grantV2V.m_tbSize = 0; //computed later
@@ -1509,11 +1517,12 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
               }
               poolIt->second.m_nextGrantV2V = grantV2V;
               poolIt->second.m_grantReceived = true;
+              NS_LOG_INFO("Succeed create transmit grant");
             }
             else
             {
               //we need to pick a random resource from the pool
-              NS_LOG_DEBUG ("SL BSR size =" << m_slBsrReceived.size ());
+              NS_LOG_INFO ("SL BSR size =" << m_slBsrReceived.size ());
               SidelinkGrant grant;
               //in order to pick a resource that is valid, we compute the number of sub-channels
               //on the PSSCH
@@ -1576,6 +1585,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
         //if we received a grant, compute the transmission opportunities for PSCCH and PSSCH
         if (poolIt->second.m_grantReceived)
         {
+          NS_LOG_INFO ("Grant Received");
           if (poolIt->second.m_pool->GetSchedulingType () == SidelinkCommResourcePool::SCHEDULED)
           {
             std::map <SidelinkLcIdentifier, LteMacSapProvider::ReportBufferStatusParameters>::iterator itBsr;
@@ -1602,6 +1612,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           SlUeMacStatParameters stats_params;
           if(m_v2v)
           {
+            NS_LOG_DEBUG("Create m_pscchTx and m_psschTx for v2v comm");
             poolIt->second.m_currentGrantV2V = poolIt->second.m_nextGrantV2V;
 
             std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> pscchTx;
@@ -1610,6 +1621,8 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
             pscchTx_item.rbStart = poolIt->second.m_currentGrantV2V.m_rbStart;
             pscchTx_item.nbRb = 2;
             pscchTx.push_back(pscchTx_item);
+            NS_LOG_DEBUG("PSCCH: Subframe " << pscchTx_item.subframe.frameNo << "/" << pscchTx_item.subframe.subframeNo
+                                            << ": rbStart=" << (uint32_t) pscchTx_item.rbStart << ", rbLen=" << (uint32_t) pscchTx_item.nbRb);
 
             std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> psschTx;
             SidelinkCommResourcePool::SidelinkTransmissionInfo psschTx_item;
@@ -1617,9 +1630,12 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
             psschTx_item.rbStart = poolIt->second.m_currentGrantV2V.m_rbStart + 2;
             psschTx_item.nbRb = poolIt->second.m_currentGrantV2V.m_rbLen;
             psschTx.push_back(psschTx_item);
+            NS_LOG_DEBUG("PSSCH: Subframe " << psschTx_item.subframe.frameNo << "/" << psschTx_item.subframe.subframeNo
+                                            << ": rbStart=" << (uint32_t) psschTx_item.rbStart << ", rbLen=" << (uint32_t) psschTx_item.nbRb);
 
             poolIt->second.m_pscchTx = pscchTx;
             poolIt->second.m_psschTx = psschTx;
+            NS_LOG_INFO("Succeed to create m_pscchTx and m_psschTx for v2v comm");
           }
           else
           {
@@ -1691,6 +1707,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           if(m_v2v)
           {
             poolIt->second.m_currentGrantV2V.m_tbSize = m_amc->GetUlTbSizeFromMcs (poolIt->second.m_currentGrantV2V.m_mcs, poolIt->second.m_currentGrantV2V.m_rbLen) / 8;
+            NS_LOG_INFO ("Sidelink Tb size = " << poolIt->second.m_currentGrant.m_tbSize << " bytes (mcs=" << (uint32_t) poolIt->second.m_currentGrant.m_mcs << ")");
           }
           else
           {
@@ -1711,6 +1728,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           //clear the grant
           poolIt->second.m_prevGrantV2V = poolIt->second.m_currentGrantV2V;
           poolIt->second.m_grantReceived = false;
+          NS_LOG_INFO("Succeed clearing grant");
         } //end of if (poolIt->second.m_grantReceived)
       }
       else
@@ -1751,6 +1769,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           sci.m_frameNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.frameNo;
           sci.m_subframeNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.subframeNo;
           sci.m_rnti = m_rnti;
+          sci.m_groupDstId = (poolIt->first & 0xFF);
           msg->SetSciF1 (sci);
         }
         else

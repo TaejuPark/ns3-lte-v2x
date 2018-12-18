@@ -562,6 +562,7 @@ LteUePhy::SetSlSpectrumPhy (Ptr<LteSpectrumPhy> phy)
 {
   NS_LOG_FUNCTION (this);
   m_sidelinkSpectrumPhy = phy;
+  m_sidelinkSpectrumPhy->Reset();
   // forward the info to SL LteSpectrumPhy
   m_sidelinkSpectrumPhy->SetSlRxGain (m_slRxGain);
 }
@@ -1179,128 +1180,126 @@ LteUePhy::ReceiveLteControlMessageList (std::list<Ptr<LteControlMessage> > msgLi
           m_ueCphySapUser->RecvSystemInformationBlockType1 (m_cellId, msg2->GetSib1 ());
         }
       else if (msg->GetMessageType () == LteControlMessage::SL_DCI)
-          {
-            Ptr<SlDciLteControlMessage> msg2 = DynamicCast<SlDciLteControlMessage> (msg);
-            SlDciListElement_s dci = msg2->GetDci ();
-            if (dci.m_rnti != m_rnti)
-              {
-                // DCI not for me
-                continue;
-              }
-            NS_LOG_INFO ("received SL_DCI");
-            // pass the info to the MAC
-            m_uePhySapUser->ReceiveLteControlMessage (msg);
-          }
-        else if (msg->GetMessageType () == LteControlMessage::SCI)
-          {
-            Ptr<SciLteControlMessage> msg2 = DynamicCast<SciLteControlMessage> (msg);
-            SciF1ListElement_s scif1;
-            SciF0ListElement_s scif0;
-            if(m_v2v)
-              {
-                scif1 = msg2->GetSciF1();
-              }
-            else
-              {
-                scif0 = msg2->GetSciF0 ();
-              }
-            //must check if the destination is one to monitor
-            std::list <uint32_t>::iterator it;
-            bool for_me = false;
-            for (it = m_destinations.begin (); it != m_destinations.end () && !for_me; it++)
-              {
-                if (m_v2v || (!m_v2v && scif0.m_groupDstId == ((*it) & 0xFF)))
-                  {
-                    //NS_LOG_INFO ("received SCI for group " << (uint32_t)((*it) & 0xFF) << " from rnti " << sci.m_rnti);
-
-                    //todo, how to find the pool among the available ones?
-                    //right now just use the first one
-                    std::list <PoolInfo>::iterator poolIt = m_sidelinkRxPools.begin ();
-                    if (poolIt == m_sidelinkRxPools.end ())
-                      {
-                        NS_LOG_INFO (this << " No Rx pool configured");
-                      }
-                    else
-                      {
-                        //this is the first transmission of PSCCH
-                        std::map<uint16_t, SidelinkGrantInfo>::iterator grantIt;
-                        if(m_v2v)
-                          {
-                            grantIt = poolIt->m_currentGrants.find (scif1.m_rnti);
-                          }
-                        else
-                          {
-                            grantIt = poolIt->m_currentGrants.find (scif0.m_rnti);
-                          }
-                        if (grantIt == poolIt->m_currentGrants.end ())
-                          {
-                            SidelinkGrantInfo txInfo;
-                            txInfo.m_grantReceived = true;
+        {
+          Ptr<SlDciLteControlMessage> msg2 = DynamicCast<SlDciLteControlMessage> (msg);
+          SlDciListElement_s dci = msg2->GetDci ();
+          if (dci.m_rnti != m_rnti)
+            {
+              // DCI not for me
+              continue;
+            }
+          NS_LOG_INFO ("received SL_DCI");
+          // pass the info to the MAC
+          m_uePhySapUser->ReceiveLteControlMessage (msg);
+        }
+      else if (msg->GetMessageType () == LteControlMessage::SCI)
+        {
+          Ptr<SciLteControlMessage> msg2 = DynamicCast<SciLteControlMessage> (msg);
+          SciF1ListElement_s scif1;
+          SciF0ListElement_s scif0;
+          if(m_v2v)
+            {
+              scif1 = msg2->GetSciF1();
+            }
+          else
+            {
+              scif0 = msg2->GetSciF0 ();
+            }
+          //must check if the destination is one to monitor
+          std::list <uint32_t>::iterator it;
+          bool for_me = false;
+          for (it = m_destinations.begin (); it != m_destinations.end () && !for_me; it++)
+            {
+              if ((m_v2v && scif1.m_groupDstId == ((*it) & 0xFF)) || (!m_v2v && scif0.m_groupDstId == ((*it) & 0xFF)))
+                {
+                  //NS_LOG_INFO ("received SCI for group " << (uint32_t)((*it) & 0xFF) << " from rnti " << sci.m_rnti);
+                  //todo, how to find the pool among the available ones?
+                  //right now just use the first one
+                  std::list <PoolInfo>::iterator poolIt = m_sidelinkRxPools.begin ();
+                  if (poolIt == m_sidelinkRxPools.end ())
+                    {
+                      NS_LOG_INFO (this << " No Rx pool configured");
+                    }
+                  else
+                    {
+                      //this is the first transmission of PSCCH
+                      std::map<uint16_t, SidelinkGrantInfo>::iterator grantIt;
+                      if(m_v2v)
+                        {
+                          grantIt = poolIt->m_currentGrants.find (scif1.m_rnti);
+                        }
+                      else
+                        {
+                          grantIt = poolIt->m_currentGrants.find (scif0.m_rnti);
+                        }
+                      if (grantIt == poolIt->m_currentGrants.end ())
+                        {
+                          NS_LOG_DEBUG (this << " First transmission of PSCCH");
+                          SidelinkGrantInfo txInfo;
+                          txInfo.m_grantReceived = true;
                             
-                            if (m_v2v)
-                              {
-                                txInfo.m_grantV2V.m_subChannelIndex = scif1.m_frl;
-                                txInfo.m_grantV2V.m_grantedSubframe.frameNo = scif1.m_frameNo;
-                                txInfo.m_grantV2V.m_grantedSubframe.subframeNo = scif1.m_subframeNo;
-                                txInfo.m_grantV2V.m_rbStart = scif1.m_rbStart;
-                                txInfo.m_grantV2V.m_rbLen = scif1.m_rbLen;
-                                txInfo.m_grantV2V.m_tbSize = scif1.m_tbSize;
-                                poolIt->m_currentGrants.insert (std::pair <uint16_t, SidelinkGrantInfo> (scif1.m_rnti, txInfo));
-                              }
-                            else
-                              {
-                                txInfo.m_grant.m_rnti = scif0.m_rnti;
-                                txInfo.m_grant.m_resPscch = scif0.m_resPscch;
-                                txInfo.m_grant.m_rbStart = scif0.m_rbStart;
-                                txInfo.m_grant.m_rbLen = scif0.m_rbLen;
-                                txInfo.m_grant.m_hopping = scif0.m_hopping;
-                                txInfo.m_grant.m_hoppingInfo = scif0.m_hoppingInfo;
-                                txInfo.m_grant.m_trp = scif0.m_trp;
-                                txInfo.m_grant.m_groupDstId = scif0.m_groupDstId;
-                                txInfo.m_grant.m_mcs = scif0.m_mcs;
-                                txInfo.m_grant.m_tbSize = scif0.m_tbSize;
-                                poolIt->m_currentGrants.insert (std::pair <uint16_t, SidelinkGrantInfo> (scif0.m_rnti, txInfo));
-                              }
+                          if (m_v2v)
+                            {
+                              txInfo.m_grantV2V.m_rnti = scif1.m_rnti;
+                              txInfo.m_grantV2V.m_subChannelIndex = scif1.m_frl;
+                              txInfo.m_grantV2V.m_grantedSubframe.frameNo = scif1.m_frameNo;
+                              txInfo.m_grantV2V.m_grantedSubframe.subframeNo = scif1.m_subframeNo;
+                              txInfo.m_grantV2V.m_rbStart = scif1.m_rbStart;
+                              txInfo.m_grantV2V.m_rbLen = scif1.m_rbLen;
+                              txInfo.m_grantV2V.m_tbSize = scif1.m_tbSize;
+                              poolIt->m_currentGrants.insert (std::pair <uint16_t, SidelinkGrantInfo> (scif1.m_rnti, txInfo));
+                            }
+                          else
+                            {
+                              txInfo.m_grant.m_rnti = scif0.m_rnti;
+                              txInfo.m_grant.m_resPscch = scif0.m_resPscch;
+                              txInfo.m_grant.m_rbStart = scif0.m_rbStart;
+                              txInfo.m_grant.m_rbLen = scif0.m_rbLen;
+                              txInfo.m_grant.m_hopping = scif0.m_hopping;
+                              txInfo.m_grant.m_hoppingInfo = scif0.m_hoppingInfo;
+                              txInfo.m_grant.m_trp = scif0.m_trp;
+                              txInfo.m_grant.m_groupDstId = scif0.m_groupDstId;
+                              txInfo.m_grant.m_mcs = scif0.m_mcs;
+                              txInfo.m_grant.m_tbSize = scif0.m_tbSize;
+                              poolIt->m_currentGrants.insert (std::pair <uint16_t, SidelinkGrantInfo> (scif0.m_rnti, txInfo));
+                            }
 
-                          } //else it should be the retransmission and the data should be the same...add check
-                        else
-                          {
-                            NS_LOG_DEBUG ("SCI Grant already present");
-                          }
-                      }
+                        } //else it should be the retransmission and the data should be the same...add check
+                      else
+                        {
+                          NS_LOG_DEBUG (this << " SCI Grant already present");
+                        }
+                    }
+                  //m_uePhySapUser->ReceiveLteControlMessage (msg);
+                }
+            }
+        }
+      else if (msg->GetMessageType() == LteControlMessage::MIB_SL)
+        {
+          Ptr<MibSlLteControlMessage> msgMibSL = DynamicCast<MibSlLteControlMessage> (msg);
+          LteRrcSap::MasterInformationBlockSL mibSL = msgMibSL->GetMibSL();
 
-                    //m_uePhySapUser->ReceiveLteControlMessage (msg);
+          //Pass the message to the RRC
+          m_ueCphySapUser->ReceiveMibSL(mibSL);
 
-                  }
-              }
-          }
-        else if (msg->GetMessageType() == LteControlMessage::MIB_SL)
-          {
-            Ptr<MibSlLteControlMessage> msgMibSL = DynamicCast<MibSlLteControlMessage> (msg);
-            LteRrcSap::MasterInformationBlockSL mibSL = msgMibSL->GetMibSL();
+          //Store the received MIB-SL during the SyncRef search
+          if (m_ueSlssScanningInProgress)
+            {
+              mibSL.rxOffset = Simulator::Now ().GetMilliSeconds () % 40;
+              m_detectedMibSl.insert (std::pair <std::pair<uint16_t, uint16_t>, LteRrcSap::MasterInformationBlockSL>
+                                                (std::pair<uint16_t, uint16_t>(mibSL.slssid, mibSL.rxOffset), mibSL));
+            }
+        }
 
-            //Pass the message to the RRC
-            m_ueCphySapUser->ReceiveMibSL(mibSL);
+      //discovery
+      else if (msg->GetMessageType () == LteControlMessage::SL_DISC_MSG)
+        {
+          Ptr<SlDiscMessage> msg2 = DynamicCast<SlDiscMessage> (msg);
+          SlDiscMsg disc = msg2->GetSlDiscMessage ();
 
-            //Store the received MIB-SL during the SyncRef search
-            if (m_ueSlssScanningInProgress)
-              {
-                mibSL.rxOffset = Simulator::Now ().GetMilliSeconds () % 40;
-                m_detectedMibSl.insert (std::pair <std::pair<uint16_t, uint16_t>, LteRrcSap::MasterInformationBlockSL>
-                                                  (std::pair<uint16_t, uint16_t>(mibSL.slssid, mibSL.rxOffset), mibSL));
-              }
-          }
-
-        //discovery
-        else if (msg->GetMessageType () == LteControlMessage::SL_DISC_MSG)
-          {
-            Ptr<SlDiscMessage> msg2 = DynamicCast<SlDiscMessage> (msg);
-            SlDiscMsg disc = msg2->GetSlDiscMessage ();
-
-            NS_LOG_INFO ("received discovery from rnti " << disc.m_rnti << " with resPsdch: " << disc.m_resPsdch);
-            m_uePhySapUser->ReceiveLteControlMessage (msg);
-          }
-
+          NS_LOG_INFO ("received discovery from rnti " << disc.m_rnti << " with resPsdch: " << disc.m_resPsdch);
+          m_uePhySapUser->ReceiveLteControlMessage (msg);
+        }
       else
         {
           // pass the message to UE-MAC
@@ -1373,7 +1372,8 @@ LteUePhy::QueueSubChannelsForTransmission (std::vector <int> rbMap)
 void
 LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
 {
-  NS_LOG_FUNCTION (this << frameNo << subframeNo);
+  NS_LOG_DEBUG ("\n");
+  NS_LOG_DEBUG ("Current frameNo: " << frameNo << " Current subframeNo: "<< subframeNo);
 
   NS_ASSERT_MSG (frameNo > 0, "the SRS index check code assumes that frameNo starts at 1");
 
@@ -1427,7 +1427,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
               //adjust because scheduler starts with frame/subframe = 1
               m_slTxPoolInfo.m_nextScPeriod.frameNo++;
               m_slTxPoolInfo.m_nextScPeriod.subframeNo++;
-              NS_LOG_INFO ("Starting new SC period for TX pool " << ". Next period at " << m_slTxPoolInfo.m_nextScPeriod.frameNo << "/" << m_slTxPoolInfo.m_nextScPeriod.subframeNo);
+              NS_LOG_DEBUG ("Starting new SC period for TX pool " << ". Next period at " << m_slTxPoolInfo.m_nextScPeriod.frameNo << "/" << m_slTxPoolInfo.m_nextScPeriod.subframeNo);
 
               if (m_waitingNextScPeriod)
                 {
@@ -1526,6 +1526,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
             if (grantIt->second.m_psschTx.size () == 0)
               {
                 //no more PSSCH transmission, clear the grant
+                NS_LOG_DEBUG (this << "PSCCH receive grant erased");
                 it->m_currentGrants.erase (grantIt++);
               }
             else
@@ -1570,6 +1571,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
 
       if (rbMask.size () == 0)
         {
+          NS_LOG_INFO("No uplink data to send\n");
           //we do not have uplink data to send. Normally, uplink has priority over Sidelink but
           //since we send UL CQI messages all the time, we can remove them if we have a Sidelink
           //transmission
@@ -1609,10 +1611,11 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                                          && (*ctrlMsg.begin ())->GetMessageType () != LteControlMessage::SL_DISC_MSG))
         {
           // send packets in queue
-          NS_LOG_LOGIC (this << " UE - start slot for PUSCH + PUCCH - RNTI " << m_rnti << " CELLID " << m_cellId);
+          NS_LOG_DEBUG (this << " UE - start slot for PUSCH + PUCCH - RNTI " << m_rnti << " CELLID " << m_cellId);
 
           if (pb)
             {
+              NS_LOG_LOGIC("sanity check if this is a Sidelink\n");
               //sanity check if this is a Sidelink
               Ptr<Packet> packet = (*(pb->Begin ()))->Copy ();
               LteRadioBearerTag tag;
@@ -1628,6 +1631,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
             }
           else
             {
+              NS_LOG_LOGIC("send only PUCCH (ideal: fake null bandwidth signal)\n");
               // send only PUCCH (ideal: fake null bandwidth signal)
               if (ctrlMsg.size ()>0)
                 {
@@ -1664,12 +1668,12 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           if (!m_waitingNextScPeriod)
             {
               //since we only have 1 Tx pool we can either send PSCCH or PSSCH but not both
-              NS_LOG_LOGIC (this << " UE - start slot for PSSCH + PSCCH - RNTI " << m_rnti << " CELLID " << m_cellId);
+              NS_LOG_DEBUG (this << " UE - start slot for PSSCH + PSCCH - RNTI " << m_rnti << " CELLID " << m_cellId);
 
               if (pb)
                 {
                   //NS_ASSERT (ctrlMsg.size () == 0); //(In the future we can have PSSCH and MIB-SL in the same subframe)
-                  NS_LOG_LOGIC (this << " UE - start TX PSSCH");
+                  NS_LOG_DEBUG (this << " UE - start TX PSSCH");
                   NS_LOG_DEBUG (this << " TX Burst containing " << pb->GetNPackets() << " packets");
 
                   //tx pool only has 1 grant so we can go straight to the first element
@@ -1692,7 +1696,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
 
                   for (int i = txIt->rbStart ; i < txIt->rbStart + txIt->nbRb ; i++)
                     {
-                      NS_LOG_LOGIC (this << " Transmitting PSSCH on RB " << i);
+                      NS_LOG_DEBUG (this << " Transmitting PSSCH on RB " << i);
                       rbMask.push_back (i);
                     }
                   m_slTxPoolInfo.m_currentGrants.begin ()->second.m_psschTx.erase (txIt);
@@ -1742,6 +1746,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                   // send only PSCCH (ideal: fake null bandwidth signal)
                   if (ctrlMsg.size ()>0 && sciDiscFound)
                     {
+                      NS_LOG_DEBUG("There is a ctrl message to send through PSCCH");
                       std::list<Ptr<LteControlMessage> >::iterator msgIt = ctrlMsg.begin ();
                       //skiping the MIB-SL if it is the first in the list
                       if ((*msgIt)->GetMessageType () != LteControlMessage::SCI && (*msgIt)->GetMessageType () != LteControlMessage::SL_DISC_MSG)
@@ -1750,51 +1755,97 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                         }
                       else if ((*msgIt)->GetMessageType () == LteControlMessage::SCI)
                         {
-                          NS_LOG_LOGIC (this << " UE - start TX PSCCH");
+                          NS_LOG_DEBUG (this << " UE - start TX PSCCH");
                           //access the control message to store the PSSCH grant and be able to
                           //determine the subframes/RBs for PSSCH transmissions/ discovery
 
                           NS_ASSERT_MSG ((*msgIt)->GetMessageType () == LteControlMessage::SCI, "Received " << (*msgIt)->GetMessageType ());
 
                           Ptr<SciLteControlMessage> msg2 = DynamicCast<SciLteControlMessage> (*msgIt);
-                          SciF0ListElement_s sci = msg2->GetSciF0 ();
+                          SciF0ListElement_s scif0 = msg2->GetSciF0 ();
+                          SciF1ListElement_s scif1 = msg2->GetSciF1 ();
 
-                          std::map<uint16_t, SidelinkGrantInfo>::iterator grantIt = m_slTxPoolInfo.m_currentGrants.find (sci.m_rnti);
+                          std::map<uint16_t, SidelinkGrantInfo>::iterator grantIt;
+                          if (m_v2v)
+                            {
+                              grantIt = m_slTxPoolInfo.m_currentGrants.find (scif1.m_rnti);
+                            }
+                          else
+                            {
+                              grantIt = m_slTxPoolInfo.m_currentGrants.find (scif0.m_rnti);
+                            }
                           if (grantIt == m_slTxPoolInfo.m_currentGrants.end ())
                             {
                               SidelinkGrantInfo grantInfo;
-                              //this is the first transmission of PSCCH
                               grantInfo.m_grantReceived = true;
-                              grantInfo.m_grant.m_rnti = sci.m_rnti;
-                              grantInfo.m_grant.m_resPscch = sci.m_resPscch;
-                              grantInfo.m_grant.m_rbStart = sci.m_rbStart;
-                              grantInfo.m_grant.m_rbLen = sci.m_rbLen;
-                              grantInfo.m_grant.m_trp = sci.m_trp;
-                              grantInfo.m_grant.m_groupDstId = sci.m_groupDstId;
-                              grantInfo.m_grant.m_mcs = sci.m_mcs;
-                              grantInfo.m_grant.m_tbSize = sci.m_tbSize;
-                              grantInfo.m_grant.m_hopping = sci.m_hopping;
-                              grantInfo.m_grant.m_hoppingInfo = sci.m_hoppingInfo;
+                              //this is the first transmission of PSCCH
 
-                              grantInfo.m_grant.frameNo = frameNo;
-                              grantInfo.m_grant.subframeNo = subframeNo;
-
-                              grantInfo.m_pscchTx = m_slTxPoolInfo.m_pool->GetPscchTransmissions (sci.m_resPscch);
-                              SidelinkCommResourcePool::SubframeInfo tmp = m_slTxPoolInfo.m_pool->GetCurrentScPeriod(frameNo, subframeNo);
-                              grantInfo.m_psschTx = m_slTxPoolInfo.m_pool->GetPsschTransmissions (tmp, grantInfo.m_grant.m_trp, grantInfo.m_grant.m_rbStart, grantInfo.m_grant.m_rbLen);
-
-                              std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator txIt;
-                              for (txIt = grantInfo.m_psschTx.begin (); txIt != grantInfo.m_psschTx.end (); txIt++)
+                              if (m_v2v)
                                 {
-                                  //adjust for index starting at 1
-                                  txIt->subframe.frameNo++;
-                                  txIt->subframe.subframeNo++;
-                                  NS_LOG_INFO (this << " Subframe Tx" << txIt->subframe.frameNo << "/" << txIt->subframe.subframeNo << ": rbStart=" << (uint32_t) txIt->rbStart << ", rbLen=" << (uint32_t) txIt->nbRb);
-                                }
+                                  //TODO: restoring pscchTx and psschTx from the buffered message for v2v communication.
+                                  grantInfo.m_grantV2V.m_rnti = scif1.m_rnti;
+                                  grantInfo.m_grantV2V.m_rbStart = scif1.m_rbStart;
+                                  grantInfo.m_grantV2V.m_rbLen = scif1.m_rbLen;
+                                  grantInfo.m_grantV2V.m_tbSize = scif1.m_tbSize;
+                                  grantInfo.m_grantV2V.m_mcs = scif1.m_mcs;
+                                  grantInfo.m_grantV2V.m_grantedSubframe.frameNo = scif1.m_frameNo;
+                                  grantInfo.m_grantV2V.m_grantedSubframe.subframeNo = scif1.m_subframeNo;                                 
+                                  grantInfo.m_grantV2V.m_subChannelIndex = scif1.m_frl;
+                                  
+                                  std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> pscchTx;
+                                  SidelinkCommResourcePool::SidelinkTransmissionInfo pscchTx_item;
+                                  pscchTx_item.subframe = grantInfo.m_grantV2V.m_grantedSubframe;
+                                  pscchTx_item.rbStart = grantInfo.m_grantV2V.m_rbStart;
+                                  pscchTx_item.nbRb = 2;
+                                  pscchTx.push_back(pscchTx_item);
+                                  
+                                  std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> psschTx;
+                                  SidelinkCommResourcePool::SidelinkTransmissionInfo psschTx_item;
+                                  psschTx_item.subframe = grantInfo.m_grantV2V.m_grantedSubframe;
+                                  psschTx_item.rbStart = grantInfo.m_grantV2V.m_rbStart + 2;
+                                  psschTx_item.nbRb = grantInfo.m_grantV2V.m_rbLen;
+                                  psschTx.push_back(psschTx_item);
 
-                              //insert grant
-                              m_slTxPoolInfo.m_currentGrants.insert (std::pair <uint16_t, SidelinkGrantInfo> (sci.m_rnti, grantInfo));
-                              NS_LOG_DEBUG (this <<  " Creating grant at " << grantInfo.m_grant.frameNo << "/" << grantInfo.m_grant.subframeNo);
+                                  grantInfo.m_pscchTx = pscchTx;
+                                  grantInfo.m_psschTx = psschTx;
+                                  
+                                  //insert grant
+                                  m_slTxPoolInfo.m_currentGrants.insert (std::pair <uint16_t, SidelinkGrantInfo> (scif1.m_rnti, grantInfo));
+                                  NS_LOG_DEBUG (this <<  " Creating grant at " << grantInfo.m_grantV2V.m_grantedSubframe.frameNo << "/" << grantInfo.m_grantV2V.m_grantedSubframe.subframeNo);
+                                }
+                              else
+                                {
+                                  grantInfo.m_grant.m_rnti = scif0.m_rnti;
+                                  grantInfo.m_grant.m_resPscch = scif0.m_resPscch;
+                                  grantInfo.m_grant.m_rbStart = scif0.m_rbStart;
+                                  grantInfo.m_grant.m_rbLen = scif0.m_rbLen;
+                                  grantInfo.m_grant.m_trp = scif0.m_trp;
+                                  grantInfo.m_grant.m_groupDstId = scif0.m_groupDstId;
+                                  grantInfo.m_grant.m_mcs = scif0.m_mcs;
+                                  grantInfo.m_grant.m_tbSize = scif0.m_tbSize;
+                                  grantInfo.m_grant.m_hopping = scif0.m_hopping;
+                                  grantInfo.m_grant.m_hoppingInfo = scif0.m_hoppingInfo;
+
+                                  grantInfo.m_grant.frameNo = frameNo;
+                                  grantInfo.m_grant.subframeNo = subframeNo;
+
+                                  grantInfo.m_pscchTx = m_slTxPoolInfo.m_pool->GetPscchTransmissions (scif0.m_resPscch);
+                                  SidelinkCommResourcePool::SubframeInfo tmp = m_slTxPoolInfo.m_pool->GetCurrentScPeriod(frameNo, subframeNo);
+                                  grantInfo.m_psschTx = m_slTxPoolInfo.m_pool->GetPsschTransmissions (tmp, grantInfo.m_grant.m_trp, grantInfo.m_grant.m_rbStart, grantInfo.m_grant.m_rbLen);
+
+                                  std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator txIt;
+                                  for (txIt = grantInfo.m_psschTx.begin (); txIt != grantInfo.m_psschTx.end (); txIt++)
+                                    {
+                                      //adjust for index starting at 1
+                                      txIt->subframe.frameNo++;
+                                      txIt->subframe.subframeNo++;
+                                      NS_LOG_DEBUG (this << " Subframe Tx" << txIt->subframe.frameNo << "/" << txIt->subframe.subframeNo << ": rbStart=" << (uint32_t) txIt->rbStart << ", rbLen=" << (uint32_t) txIt->nbRb);
+                                    }
+
+                                  //insert grant
+                                  m_slTxPoolInfo.m_currentGrants.insert (std::pair <uint16_t, SidelinkGrantInfo> (scif0.m_rnti, grantInfo));
+                                  NS_LOG_DEBUG (this <<  " Creating grant at " << grantInfo.m_grant.frameNo << "/" << grantInfo.m_grant.subframeNo);
+                                }
                             }
                           else
                             {
@@ -1805,7 +1856,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                           std::vector <int> slRb;
                           for (int i = txIt->rbStart ; i < txIt->rbStart + txIt->nbRb ; i++)
                             {
-                              NS_LOG_LOGIC (this << " Transmitting PSCCH on RB " << i);
+                              NS_LOG_DEBUG (this << " Transmitting PSCCH on RB " << i);
                               slRb.push_back (i);
                             }
                           m_slTxPoolInfo.m_currentGrants.begin ()->second.m_pscchTx.erase (txIt);
@@ -1830,11 +1881,11 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                   SetSubChannelsForTransmission (slRb);
                                   if(m_v2v)
                                   {
-                                    m_sidelinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, sci.m_groupDstId);
+                                    m_sidelinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, scif1.m_groupDstId);
                                   }
                                   else
                                   {
-                                    m_uplinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, sci.m_groupDstId);
+                                    m_uplinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, scif0.m_groupDstId);
                                   }
                                 }
                             }
@@ -2064,7 +2115,7 @@ LteUePhy::DoReset ()
   m_sendSrsEvent.Cancel ();
   m_downlinkSpectrumPhy->Reset ();
   m_uplinkSpectrumPhy->Reset ();
-  m_sidelinkSpectrumPhy->Reset ();
+  //m_sidelinkSpectrumPhy->Reset ();
 
 } // end of void LteUePhy::DoReset ()
 
@@ -2503,24 +2554,6 @@ LteUePhy::GetFirstScanningTime ()
   NS_LOG_FUNCTION (this);
   return m_tFirstScanning;
 }
-
-/*
-double MeasureRSSI(Ptr<SpectrumValue> p){
-  double rsrp;
-  double rsrpsum = 0.0;
-  uint16_t rsrpnum = 0;
-  Values::const_iterator itPi;
-  for (itPi = p->ConstValuesBegin(); itPi != p->ConstValuesEnd(); itPi++)
-  {
-    if((*itPi))
-    {
-      double powerTxW = ((*itPi) * 180000.0) / 12.0; // convert PSD [W/Hz] to linear power [W]
-      rsrpsum += powerTxW;
-      rsrpnum++;
-    }
-  }
-}
-*/
 
 void
 LteUePhy::ReceiveSlss (uint16_t slssid, Ptr<SpectrumValue> p)

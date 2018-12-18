@@ -223,7 +223,6 @@ SidelinkCommResourcePool::SetPool (LteRrcSap::SlCommResourcePool pool)
   m_scTfResourceConfig = pool.scTfResourceConfig;
   m_dataCpLen = pool.dataCpLen;
   m_dataHoppingConfig = pool.dataHoppingConfig;
-  m_nSubChannel = 5;
 
   if (pool.haveUeSelectedResourceConfig)
     {
@@ -266,6 +265,12 @@ SidelinkCommResourcePool::SetV2XPool (LteRrcSap::SlPreconfigCommPool pool)
   m_dataTfResourceConfig = pool.dataTfResourceConfig;
   m_trptSubset = pool.trptSubset;
 
+  m_nSubChannel = 5;
+  for(int i = 0; i < m_nSubChannel; i++)
+    {
+      m_subChannelRbIndex.push_back(i*10);
+    }
+
   Initialize ();
 }
 
@@ -284,7 +289,11 @@ SidelinkCommResourcePool::SetPool (LteRrcSap::SlPreconfigCommPool pool)
   m_dataHoppingConfig = pool.dataHoppingConfig;
   m_dataTfResourceConfig = pool.dataTfResourceConfig;
   m_trptSubset = pool.trptSubset;
-
+  m_nSubChannel = 5;
+  for(int i = 0; i < m_nSubChannel; i++)
+   {
+     m_subChannelRbIndex.push_back(i*10);
+   }
   Initialize ();
 }
 
