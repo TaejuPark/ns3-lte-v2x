@@ -314,6 +314,8 @@ LteAmc::GetUlTbSizeFromMcs (int mcs, int nprb)
   NS_ASSERT_MSG (nprb < 111, "NPRB=" << nprb);
 
   int itbs = McsToItbsUl[mcs];
+  NS_LOG_DEBUG("mcs="<<mcs<<", nprb="<<nprb<<", itbs="<<itbs);
+  NS_LOG_DEBUG("return_value="<<TransportBlockSizeTable[nprb-1][itbs]);
   return (TransportBlockSizeTable[nprb - 1][itbs]);
 }
 

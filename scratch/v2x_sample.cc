@@ -165,6 +165,7 @@ main (int argc, char *argv[])
       LogComponentEnable ("LteSlUeRrc", logLevel);
       LogComponentEnable ("LteSidelinkHelper", logLevel);
       LogComponentEnable ("LteHelper", logLevel);
+      LogComponentEnable ("LteAmc", logLevel);
     }
 
 
