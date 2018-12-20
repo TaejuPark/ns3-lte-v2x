@@ -1391,7 +1391,7 @@ LteUeRrc::SynchronizeToStrongestCell ()
 
   if (maxRsrpCellId == 0)
     {
-      NS_LOG_WARN (this << " Cell search is unable to detect surrounding cell to attach to");
+      NS_LOG_INFO (this << " Cell search is unable to detect surrounding cell to attach to");
     }
   else
     {

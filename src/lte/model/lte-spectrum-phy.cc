@@ -666,14 +666,10 @@ void
 LteSpectrumPhy::ClearExpectedSlTb ()
 {
   NS_LOG_FUNCTION (this);
-  NS_LOG_DEBUG ("Expected TBs: " << m_expectedSlTbs.size ());
+  NS_LOG_INFO ("Expected TBs: " << m_expectedSlTbs.size ());
   m_expectedSlTbs.clear ();
-  NS_LOG_DEBUG ("After clearing Expected TBs size: " << m_expectedSlTbs.size ());
+  NS_LOG_INFO ("After clearing Expected TBs size: " << m_expectedSlTbs.size ());
 }
-
-
-
-
 
 bool
 LteSpectrumPhy::StartTxDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteControlMessage> > ctrlMsgList, Time duration)
@@ -740,7 +736,7 @@ LteSpectrumPhy::StartTxDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteControlM
 bool
 LteSpectrumPhy::StartTxSlDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteControlMessage> > ctrlMsgList, Time duration, uint8_t groupId)
 {
-  NS_LOG_DEBUG (this << pb << " ID:" << GetDevice()->GetNode()->GetId() << " State: " << m_state);
+  NS_LOG_INFO (this << pb << " ID:" << GetDevice()->GetNode()->GetId() << " State: " << m_state);
 
   m_phyTxStartTrace (pb);
 
@@ -954,7 +950,7 @@ LteSpectrumPhy::EndTxUlSrs ()
 void
 LteSpectrumPhy::StartRx (Ptr<SpectrumSignalParameters> spectrumRxParams)
 {
-  NS_LOG_DEBUG (this << spectrumRxParams << " State: " << m_state);
+  NS_LOG_INFO (this << spectrumRxParams << " State: " << m_state);
 
   Ptr <const SpectrumValue> rxPsd = spectrumRxParams->psd;
   Time duration = spectrumRxParams->duration;
@@ -994,7 +990,7 @@ LteSpectrumPhy::StartRx (Ptr<SpectrumSignalParameters> spectrumRxParams)
         {
           if (m_halfDuplexPhy->GetState () == IDLE || !(m_halfDuplexPhy->m_ulDataSlCheck))
             {
-              NS_LOG_DEBUG(this<<" Received Sidelink Data "<<m_halfDuplexPhy);
+              NS_LOG_INFO (this<<" Received Sidelink Data "<<m_halfDuplexPhy);
               StartRxSlData (lteSlRxParams);
             }
           }
@@ -1088,7 +1084,7 @@ LteSpectrumPhy::StartRxData (Ptr<LteSpectrumSignalParametersDataFrame> params)
 void
 LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
 {
-  NS_LOG_DEBUG (this <<" Cell ID: "<<m_cellId<<" Node ID: " << GetDevice()->GetNode()->GetId() << " State: " << m_state);
+  NS_LOG_INFO (this <<" Cell ID: "<<m_cellId<<" Node ID: " << GetDevice()->GetNode()->GetId() << " State: " << m_state);
 
   switch (m_state)
     {
@@ -1110,13 +1106,12 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
           if(m_cellId == 0 && params->nodeId != GetDevice()->GetNode()->GetId())
             {
               NS_LOG_LOGIC ("the signal is neither from eNodeB nor from this UE");
-              NS_LOG_DEBUG ("Signal is from Node id = "<<params->nodeId);
+              NS_LOG_INFO ("Signal is from Node id = "<<params->nodeId);
 
               //SLSSs (PSBCH) should be received by all UEs
               //Checking if it is a SLSS, and if it is: measure S-RSRP and receive MIB-SL
               if (params->ctrlMsgList.size () >0)
                 {
-                  NS_LOG_DEBUG ("ctrlMsgList.size() > 0");
                   std::list<Ptr<LteControlMessage> >::iterator ctrlIt;
                   for (ctrlIt=params->ctrlMsgList.begin() ; ctrlIt != params->ctrlMsgList.end(); ctrlIt++)
                     {
@@ -1180,10 +1175,9 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
               //Receive PSCCH, PSSCH and PSDCH only if synchronized to the transmitter (having the same SLSSID)
               //and belonging to the destination group
 
-              NS_LOG_DEBUG("params->slssId="<<params->slssId<<", m_slssId="<<m_slssId<<", params->groupId="<<params->groupId); 
               if (params->slssId == m_slssId && (params->groupId == 0 || m_l1GroupIds.find (params->groupId) != m_l1GroupIds.end()))
                 {
-                  NS_LOG_DEBUG("Synchronized to transmitter. Already ready to receive PSCCH, PSSCH");
+                  NS_LOG_INFO ("Synchronized to transmitter. Already ready to receive PSCCH, PSSCH");
                   if (m_rxPacketInfo.empty ())
                     {
                       NS_ASSERT (m_state == IDLE);
@@ -1216,22 +1210,25 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
                   //will be used later to compute error rate
                   std::vector <int> rbMap;
                   int i = 0;
+                  int used_rb_cnt = 0;
                   for (Values::const_iterator it=params->psd->ConstValuesBegin (); it != params->psd->ConstValuesEnd () ; it++, i++)
                     {
                       if (*it != 0)
                         {
-                          NS_LOG_DEBUG ("SL Message arriving on RB " << i);
+                          NS_LOG_INFO ("SL Message arriving on RB " << i);
                           rbMap.push_back (i);
+                          used_rb_cnt++;
                         }
                     }
+                  NS_LOG_DEBUG ("SL Message arriving on "<<used_rb_cnt<<" RBs");
                   packetInfo.rbBitmap = rbMap;
                   m_rxPacketInfo.push_back (packetInfo);
                   if (params->packetBurst)
                     {
                       m_phyRxStartTrace (params->packetBurst);
-                      NS_LOG_DEBUG ("RX Burst containing " << params->packetBurst->GetNPackets() << " packets");
+                      NS_LOG_INFO ("RX Burst containing " << params->packetBurst->GetNPackets() << " packets");
                     }
-                  NS_LOG_DEBUG ("Insert Sidelink ctrl msgs " << params->ctrlMsgList.size ());
+                  NS_LOG_INFO ("Insert Sidelink ctrl msgs " << params->ctrlMsgList.size ());
                   NS_LOG_LOGIC ("numSimultaneousRxEvents = " << m_rxPacketInfo.size ());
                 }
               else
@@ -1735,9 +1732,9 @@ LteSpectrumPhy::EndRxSlData ()
   // as a side effect, the error model should update the error status of all TBs
   m_interferenceSl->EndRx ();
   NS_LOG_DEBUG ("No. of SL burts " << m_rxPacketInfo.size ());
-  NS_LOG_DEBUG ("Expected TBs (communication) " << m_expectedSlTbs.size ());
-  NS_LOG_DEBUG ("Expected TBs (discovery) " << m_expectedDiscTbs.size ());
-  NS_LOG_DEBUG ("No Ctrl messages " << m_rxControlMessageList.size ());
+  NS_LOG_INFO ("Expected TBs (communication) " << m_expectedSlTbs.size ());
+  NS_LOG_INFO ("Expected TBs (discovery) " << m_expectedDiscTbs.size ());
+  NS_LOG_INFO ("No Ctrl messages " << m_rxControlMessageList.size ());
 
   NS_ASSERT (m_transmissionMode < m_txModeGain.size ());
 
@@ -2026,10 +2023,10 @@ LteSpectrumPhy::EndRxSlData ()
               if ( m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::SCI)
                 {
                   //Average gain for SIMO based on [CatreuxMIMO] --> m_slSinrPerceived[i] * 2.51189
-                  NS_LOG_DEBUG (this << " Average gain for SIMO = " << m_slRxGain << " Watts");
+                  NS_LOG_INFO (this << " Average gain for SIMO = " << m_slRxGain << " Watts");
                   errorRate = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSinrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
                   corrupt = m_random->GetValue () > errorRate ? false : true;
-                  NS_LOG_DEBUG (this << " PSCCH Decoding, errorRate " << errorRate << " error " << corrupt);
+                  NS_LOG_INFO (this << " PSCCH Decoding, errorRate " << errorRate << " error " << corrupt);
                 }
               else if (m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::MIB_SL)
                 {
@@ -2104,7 +2101,7 @@ LteSpectrumPhy::EndRxSlData ()
         {
           if (!m_ltePhyRxCtrlEndOkCallback.IsNull ())
             {
-              NS_LOG_DEBUG (this << " PSCCH OK");
+              NS_LOG_DEBUG ("Receive OK (No Error, No Collision)");
               m_ltePhyRxCtrlEndOkCallback (rxControlMessageOkList);
             }
         }

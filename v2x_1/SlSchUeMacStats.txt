@@ -1,2 +1,0 @@
-% time	cellId	IMSI	RNTI	scPrdStartFr	scPrdStartSf	schStartFr	schStartSf	currFr	currSf	mcs	TBS	psschRB	psschLen
-1042	0	3	3	105	1	109	1	105	7	80	0	12	8

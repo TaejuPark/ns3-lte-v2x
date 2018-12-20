@@ -1286,7 +1286,7 @@ LteUeMac::RefreshHarqProcessesPacketBuffer (void)
 void
 LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
 {
-  NS_LOG_DEBUG (this << " Current frameNo: " << frameNo << " Current subframeNo: "<< subframeNo);
+  NS_LOG_INFO (" Current frameNo: " << frameNo << " Current subframeNo: "<< subframeNo);
   m_frameNo = frameNo;
   m_subframeNo = subframeNo;
   RefreshHarqProcessesPacketBuffer ();
@@ -1316,7 +1316,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           subframeNo = subframeNo + UL_PUSCH_TTIS_DELAY;
         }
 
-      NS_LOG_DEBUG ("Adjusted Frame no. " << frameNo << " Subframe no. " << subframeNo);
+      NS_LOG_INFO ("Adjusted Frame no. " << frameNo << " Subframe no. " << subframeNo);
 
       //Sidelink Discovery
       if (m_discTxApps.size () > 0)
@@ -1461,7 +1461,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                     if (itBsr->first.dstL2Id == poolIt->first)
                       {
                         //this is the BSR for the pool
-                        NS_LOG_DEBUG ("Found the BSR. Tx Queue size = "<<(*itBsr).second.txQueueSize);
+                        NS_LOG_INFO ("Found the BSR. Tx Queue size = "<<(*itBsr).second.txQueueSize);
                         break;
                       }
                   }
@@ -1483,7 +1483,6 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                         if (poolIt->second.m_reserveCount==0)
                           {
                             poolIt->second.m_reserveCount = (uint32_t) m_ueSelectedUniformVariable->GetInteger(5, 15);
-                            NS_LOG_DEBUG (this << "updated m_reserveCount = " << (uint32_t) poolIt->second.m_reserveCount);
         
                             // pick a random subChannel for transmission
                             // TODO: implement SPS with rssiMap;
@@ -1504,7 +1503,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                 ultimateSubframe.subframeNo -= 10;
                               }
         
-                            NS_LOG_DEBUG("Assigned frameNo: " << ultimateSubframe.frameNo << " subframeNo: " << ultimateSubframe.subframeNo);
+                            NS_LOG_INFO("Assigned frameNo: " << ultimateSubframe.frameNo << " subframeNo: " << ultimateSubframe.subframeNo);
                             grantV2V.m_grantedSubframe = ultimateSubframe;
                             grantV2V.m_subChannelIndex = m_ueSelectedUniformVariable->GetInteger (0, poolIt->second.m_pool->GetNSubChannel()-1);
 
@@ -1620,7 +1619,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                   SlUeMacStatParameters stats_params;
                   if (m_v2v)
                     {
-                      NS_LOG_DEBUG("Create m_pscchTx and m_psschTx for v2v comm");
+                      NS_LOG_INFO ("Create m_pscchTx and m_psschTx for v2v comm");
                       poolIt->second.m_currentGrantV2V = poolIt->second.m_nextGrantV2V;
 
                       std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> pscchTx;
@@ -1629,7 +1628,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                       pscchTx_item.rbStart = poolIt->second.m_currentGrantV2V.m_rbStart;
                       pscchTx_item.nbRb = 2;
                       pscchTx.push_back(pscchTx_item);
-                      NS_LOG_DEBUG("PSCCH: Subframe " << pscchTx_item.subframe.frameNo << "/" << pscchTx_item.subframe.subframeNo
+                      NS_LOG_DEBUG ("PSCCH: Assigned Subframe " << pscchTx_item.subframe.frameNo << "/" << pscchTx_item.subframe.subframeNo
                                                       << ": rbStart=" << (uint32_t) pscchTx_item.rbStart << ", rbLen=" << (uint32_t) pscchTx_item.nbRb);
 
                       std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> psschTx;
@@ -1638,7 +1637,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                       psschTx_item.rbStart = poolIt->second.m_currentGrantV2V.m_rbStart + 2;
                       psschTx_item.nbRb = poolIt->second.m_currentGrantV2V.m_rbLen;
                       psschTx.push_back(psschTx_item);
-                      NS_LOG_DEBUG("PSSCH: Subframe " << psschTx_item.subframe.frameNo << "/" << psschTx_item.subframe.subframeNo
+                      NS_LOG_DEBUG ("PSSCH: Assigned Subframe " << psschTx_item.subframe.frameNo << "/" << psschTx_item.subframe.subframeNo
                                                       << ": rbStart=" << (uint32_t) psschTx_item.rbStart << ", rbLen=" << (uint32_t) psschTx_item.nbRb);
 
                       poolIt->second.m_pscchTx = pscchTx;
@@ -1716,7 +1715,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                   if (m_v2v)
                     {
                       poolIt->second.m_currentGrantV2V.m_tbSize = m_amc->GetUlTbSizeFromMcs (poolIt->second.m_currentGrantV2V.m_mcs, poolIt->second.m_currentGrantV2V.m_rbLen) / 8;
-                      NS_LOG_DEBUG ("Sidelink Tb size = " << poolIt->second.m_currentGrantV2V.m_tbSize << " bytes (mcs=" << (uint32_t) poolIt->second.m_currentGrantV2V.m_mcs << ")");
+                      NS_LOG_INFO ("Sidelink Tb size = " << poolIt->second.m_currentGrantV2V.m_tbSize << " bytes (mcs=" << (uint32_t) poolIt->second.m_currentGrantV2V.m_mcs << ")");
                     }
                   else
                     {
@@ -1742,9 +1741,9 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
             }
           else
             {
-              NS_LOG_DEBUG ("Sidelink Control period not started yet");
-              NS_LOG_DEBUG("current frame number = " << frameNo <<" Next SC period frame number = "<<poolIt->second.m_nextScPeriod.frameNo);
-              NS_LOG_DEBUG("current subframe number = " << subframeNo <<" Next SC period subframe number = "<<poolIt->second.m_nextScPeriod.subframeNo);
+              NS_LOG_INFO ("Sidelink Control period not started yet");
+              NS_LOG_INFO ("current frame number = " << frameNo <<" Next SC period frame number = "<<poolIt->second.m_nextScPeriod.frameNo);
+              NS_LOG_INFO ("current subframe number = " << subframeNo <<" Next SC period subframe number = "<<poolIt->second.m_nextScPeriod.subframeNo);
             }
 
           std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo>::iterator allocIt;
@@ -1752,7 +1751,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           allocIt = poolIt->second.m_pscchTx.begin ();
           if (allocIt != poolIt->second.m_pscchTx.end () && (*allocIt).subframe.frameNo == frameNo && (*allocIt).subframe.subframeNo == subframeNo)
             {
-              NS_LOG_DEBUG("We need to trasmit on PSCCH");
+              NS_LOG_INFO ("We need to trasmit on PSCCH");
               //transmission of PSCCH, no need for HARQ
               if (poolIt->second.m_pscchTx.size () == 2)
                 {
@@ -1800,7 +1799,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                   msg->SetSciF0 (sci);
                 }
 
-              NS_LOG_DEBUG ("SCI message is queued at m_controlMessage");
+              NS_LOG_INFO ("SCI message is queued at m_controlMessage");
               m_uePhySapProvider->SendLteControlMessage (msg);
               poolIt->second.m_pscchTx.erase (allocIt);
             }
@@ -1809,7 +1808,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
           allocIt = poolIt->second.m_psschTx.begin ();
           if (allocIt != poolIt->second.m_psschTx.end () && (*allocIt).subframe.frameNo == frameNo && (*allocIt).subframe.subframeNo == subframeNo)
             {
-              NS_LOG_DEBUG ("We need to transmit on PSSCH");
+              NS_LOG_INFO ("We need to transmit on PSSCH");
               // Collect statistics for SL share channel UE MAC scheduling trace
               SlUeMacStatParameters stats_sch_params;
               stats_sch_params.m_frameNo = poolIt->second.m_currentScPeriod.frameNo;
@@ -1857,7 +1856,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                   std::map <SidelinkLcIdentifier, LteMacSapProvider::ReportBufferStatusParameters>::iterator itBsr;
                   for (itBsr = m_slBsrReceived.begin ();  itBsr != m_slBsrReceived.end (); itBsr++)
                     {
-                      NS_LOG_DEBUG ("There is received BSR");
+                      NS_LOG_INFO ("There is received BSR");
                       if (itBsr->first.dstL2Id == poolIt->first)
                         {
                           //this is the BSR for the pool
@@ -1884,7 +1883,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                 {
                                   bytesForThisLc = poolIt->second.m_currentGrant.m_tbSize;
                                 }
-                              NS_LOG_DEBUG ("RNTI " << m_rnti << " Sidelink Tx " << bytesForThisLc << " bytes to LC "
+                              NS_LOG_INFO ("RNTI " << m_rnti << " Sidelink Tx " << bytesForThisLc << " bytes to LC "
                                                     << (uint32_t)(*itBsr).first.lcId << " statusQueue " << (*itBsr).second.statusPduSize
                                                     << " retxQueue" << (*itBsr).second.retxQueueSize << " txQueue"
                                                     <<  (*itBsr).second.txQueueSize);
@@ -1926,7 +1925,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                     {
                                       // minimum RLC overhead due to header
                                       uint32_t rlcOverhead = 2;
-                                      NS_LOG_DEBUG ("Serve tx DATA, bytes " << bytesForThisLc << ", RLC overhead " << rlcOverhead);
+                                      NS_LOG_DEBUG ("frameNo: "<<frameNo <<", subframeNo:"<<subframeNo<<", Serve tx DATA, bytes " << bytesForThisLc << ", RLC overhead " << rlcOverhead);
                                       (*it).second.macSapUser->NotifyTxOpportunity (bytesForThisLc, 0, 0, m_componentCarrierId, m_rnti, (*itBsr).first.lcId);
                                       if ((*itBsr).second.txQueueSize >= bytesForThisLc - rlcOverhead)
                                         {
