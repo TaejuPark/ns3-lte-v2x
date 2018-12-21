@@ -1497,11 +1497,13 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             ultimateSubframe.frameNo = poolIt->second.m_currentScPeriod.frameNo + relativeSubframe.frameNo;
                             ultimateSubframe.subframeNo = poolIt->second.m_currentScPeriod.subframeNo + relativeSubframe.subframeNo;
                 
-                            if (ultimateSubframe.subframeNo >= 10)
+                            if (ultimateSubframe.subframeNo >= 11)
                               {
                                 ultimateSubframe.frameNo++;
                                 ultimateSubframe.subframeNo -= 10;
                               }
+
+                            
         
                             NS_LOG_INFO("Assigned frameNo: " << ultimateSubframe.frameNo << " subframeNo: " << ultimateSubframe.subframeNo);
                             grantV2V.m_grantedSubframe = ultimateSubframe;
@@ -1519,6 +1521,14 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                           {
                             poolIt->second.m_reserveCount--; // decrement by 1
                             grantV2V = poolIt->second.m_prevGrantV2V;
+                            grantV2V.m_grantedSubframe.frameNo += poolIt->second.m_pool->GetScPeriod() / 10;
+                            grantV2V.m_grantedSubframe.subframeNo += poolIt->second.m_pool->GetScPeriod() % 10;
+
+                            if (grantV2V.m_grantedSubframe.subframeNo >= 11)
+                              {
+                                grantV2V.m_grantedSubframe.frameNo++;
+                                grantV2V.m_grantedSubframe.subframeNo -= 10;
+                              }
                           }
 
                         poolIt->second.m_nextGrantV2V = grantV2V;
@@ -1642,7 +1652,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
 
                       poolIt->second.m_pscchTx = pscchTx;
                       poolIt->second.m_psschTx = psschTx;
-                      NS_LOG_INFO("Succeed to create m_pscchTx and m_psschTx for v2v comm");
+                      NS_LOG_INFO("Succeed to create m_pscchTx and m_psschTx for v2v comm"); 
                     }
                   else
                     {
