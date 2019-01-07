@@ -1195,16 +1195,8 @@ LteUePhy::ReceiveLteControlMessageList (std::list<Ptr<LteControlMessage> > msgLi
       else if (msg->GetMessageType () == LteControlMessage::SCI)
         {
           Ptr<SciLteControlMessage> msg2 = DynamicCast<SciLteControlMessage> (msg);
-          SciF1ListElement_s scif1;
-          SciF0ListElement_s scif0;
-          if(m_v2v)
-            {
-              scif1 = msg2->GetSciF1();
-            }
-          else
-            {
-              scif0 = msg2->GetSciF0 ();
-            }
+          SciF1ListElement_s scif1 = msg2->GetSciF1 ();
+          SciF0ListElement_s scif0 = msg2->GetSciF0 ();
           //must check if the destination is one to monitor
           std::list <uint32_t>::iterator it;
           bool for_me = false;

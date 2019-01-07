@@ -262,6 +262,7 @@ main (int argc, char *argv[])
   // Create node container to hold all UEs
   NodeContainer ueAllNodes;
 
+  /*
   // Responder users
   NodeContainer ueResponders;
   if (ueRespondersPerSector > 0)
@@ -289,12 +290,19 @@ main (int argc, char *argv[])
       //Do not set position here, the topology helper takes care of deploying the nodes when called ahead!
       mobilityResponders.Install (ueResponders);
     }
-
+  */
+  // Load scenario from SUMO output
+  Ns2MobilityHelper acosta = Ns2MobilityHelper("/home/taeju/git-projects/ns3-lte-v2x/acosta_ns2_mobility.tcl");
+  NodeContainer ueResponders;
+  ueResponders.Create(numGroups);
+  ueAllNodes.Add (ueResponders);
+  acosta.Install(ueResponders.Begin(), ueResponders.End());
 
   // Install LTE devices to all UEs and deploy them in the sectors.
   NS_LOG_INFO ("Installing UE's network devices and Deploying...");
   lteHelper->SetAttribute ("UseSidelink", BooleanValue (true));
-  NetDeviceContainer ueRespondersDevs = topoHelper->DropUEsUniformlyPerSector (ueResponders);
+  //NetDeviceContainer ueRespondersDevs = topoHelper->DropUEsUniformlyPerSector (ueResponders);
+  NetDeviceContainer ueRespondersDevs = lteHelper->InstallUeDevice (ueResponders);
   NetDeviceContainer ueDevs;
   ueDevs.Add (ueRespondersDevs);
 

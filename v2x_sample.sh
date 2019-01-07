@@ -78,8 +78,10 @@ RESP=$9 #Responder UEs per sector
 
 Rings=1 #Topology Rings
 sites=$((1+6*$Rings*($Rings-1)/2)) #Number of cell sites
-sectors=$(($sites*3)) #Total number of sectors, i.e., 3 sectors per site.
-GRP_SECTOR=$RESP #Groups per sectors
+#sectors=$(($sites*3)) #Total number of sectors, i.e., 3 sectors per site.
+sectors=1
+#GRP_SECTOR=$RESP #Groups per sectors
+GRP_SECTOR=153
 GRP=$(($sectors*$GRP_SECTOR)) #Number of D2D groups in the whole topology
 
 STARTRUN=1 #Run number to start

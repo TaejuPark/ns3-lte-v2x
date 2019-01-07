@@ -325,7 +325,7 @@ LteSidelinkHelper::AssociateForBroadcastWithTxEnabledToReceive (double txPower, 
       //prepare group for this transmitter
       NetDeviceContainer newGroup (tx);
       uint32_t nRxDevices = remainingUes.GetN ();
-      double rsrpRx = 0;
+      //double rsrpRx = 0;
 
       for (uint32_t j = 0; j < nRxDevices; ++j)
         {
@@ -334,24 +334,24 @@ LteSidelinkHelper::AssociateForBroadcastWithTxEnabledToReceive (double txPower, 
             {
               Ptr<SpectrumPhy> txPhy = tx->GetObject<LteUeNetDevice> ()->GetPhy ()->GetUlSpectrumPhy ();
               Ptr<SpectrumPhy> rxPhy = rx->GetObject<LteUeNetDevice> ()->GetPhy ()->GetUlSpectrumPhy ();
+              //if (compMethod == LteSidelinkHelper::SLRSRP_PSBCH)
+              //  {
 
-              if (compMethod == LteSidelinkHelper::SLRSRP_PSBCH)
-                {
-
-                  rsrpRx = SidelinkRsrpCalculator::CalcSlRsrpPsbch (lossModel, txPower, ulEarfcn, ulBandwidth, txPhy, rxPhy);
-                }
-              else
-                {
-                  rsrpRx = SidelinkRsrpCalculator::CalcSlRsrpTxPw (lossModel, txPower, txPhy, rxPhy);
-                }
+              //    rsrpRx = SidelinkRsrpCalculator::CalcSlRsrpPsbch (lossModel, txPower, ulEarfcn, ulBandwidth, txPhy, rxPhy);
+              //  }
+              //else
+              //  {
+              //    rsrpRx = SidelinkRsrpCalculator::CalcSlRsrpTxPw (lossModel, txPower, txPhy, rxPhy);
+              //  }
               //If receiver UE is not within RSRP* of X dBm of the transmitter UE then randomly reselect the receiver UE among the UEs that are within the RSRP of X dBm of the transmitter UE and are not part of a group already.
-              NS_LOG_DEBUG ("\tCandidate Rx= " << rx->GetNode ()->GetId () << " Rsrp=" << rsrpRx << " required=" << rsrpThreshold);
-              if (rsrpRx >= rsrpThreshold)
-                {
+              //NS_LOG_DEBUG ("\tCandidate Rx= " << rx->GetNode ()->GetId () << " Rsrp=" << rsrpRx << " required=" << rsrpThreshold);
+              //if (rsrpRx >= rsrpThreshold)
+              //  {
                   //good receiver
-                  NS_LOG_DEBUG ("\tAdding Rx to group");
-                  newGroup.Add (rx);
-                }
+              //    NS_LOG_DEBUG ("\tAdding Rx to group");
+              //    newGroup.Add (rx);
+              //  }
+              newGroup.Add (rx);
             }
         }
       groups.push_back (newGroup);
