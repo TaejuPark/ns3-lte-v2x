@@ -631,6 +631,7 @@ public:
       sf60,
       sf70,
       sf80,
+      sf100,
       sf120,
       sf140,
       sf160,
@@ -662,6 +663,9 @@ public:
         break;
       case 80: 
         p.period = SlPeriodComm::sf80;
+        break;
+      case 100:
+        p.period = SlPeriodComm::sf100;
         break;
       case 120:
         p.period = SlPeriodComm::sf120;
@@ -710,6 +714,9 @@ public:
         break;
       case SlPeriodComm::sf80:
         p = 80;
+        break;
+      case SlPeriodComm::sf100:
+        p = 100;
         break;
       case SlPeriodComm::sf120:
         p = 120;

@@ -43,7 +43,7 @@ NS_LOG_COMPONENT_DEFINE ("LteSlPreconfigPoolFactory");
 LteSlPreconfigPoolFactory::LteSlPreconfigPoolFactory ()
 {
   m_scCpLen = "NORMAL";
-  m_period = "sf40";
+  m_period = "sf100";
   m_scPrbNum = 22;
   m_scPrbStart = 0;
   m_scPrbEnd = 49;
@@ -103,6 +103,10 @@ LteSlPreconfigPoolFactory::CreatePool ()
   else if (m_period == "sf80")
     {
       m_pool.scPeriod.period = LteRrcSap::SlPeriodComm::sf80;
+    }
+  else if (m_period == "sf100")
+    {
+      m_pool.scPeriod.period = LteRrcSap::SlPeriodComm::sf100;
     }
   else if (m_period == "sf120")
     {

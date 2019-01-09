@@ -362,6 +362,7 @@ private:
   uint8_t m_componentCarrierId;
 
   bool m_v2v;
+  std::vector<bool> m_not_sensed_subframe;
 
 private:
 

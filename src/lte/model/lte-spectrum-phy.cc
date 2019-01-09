@@ -2310,6 +2310,7 @@ LteSpectrumPhy::GetRssiMap ()
 void
 LteSpectrumPhy::UpdateRssiMap ()
 {
+  NS_LOG_DEBUG (this);
   uint16_t rbNum = 0;
   double rssiSum = 0.0;
   double rssi = 0.0;
