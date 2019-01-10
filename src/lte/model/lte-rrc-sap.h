@@ -1019,6 +1019,7 @@ public:
     SlTfResourceConfig dataTfResourceConfig; ///< Sidelink data time and frequency resource configuration
     SlTrptSubset trptSubset; ///< TRPT configuration (optional)
     SlTxParameters dataTxParameters; ///< Sidelink data Tx parameters
+    uint32_t rbPerSubChannel;
   };
   
   /// SlPreconfigCommPoolList structure

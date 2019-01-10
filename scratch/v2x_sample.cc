@@ -551,6 +551,7 @@ main (int argc, char *argv[])
   pfactory.SetControlPeriod (pstream.str ());
   pfactory.SetControlPrbNum (pscchRbs);
   pfactory.SetDataOffset (pscchLength);
+  pfactory.SetRbPerSubChannel (15);
 
   preconfiguration.preconfigComm.pools[0] = pfactory.CreatePool ();
   ueSidelinkConfiguration->SetSlPreconfiguration (preconfiguration);

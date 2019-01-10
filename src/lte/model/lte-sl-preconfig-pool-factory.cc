@@ -67,6 +67,7 @@ LteSlPreconfigPoolFactory::LteSlPreconfigPoolFactory ()
   m_txP0 = -40;
   m_dataAlpha = "al09";
   m_dataP0 = -4;
+  m_RbPerSubChannel = 15;
   NS_LOG_FUNCTION (this);
 }
 
@@ -74,6 +75,7 @@ LteRrcSap::SlPreconfigCommPool
 LteSlPreconfigPoolFactory::CreatePool ()
 {
   // Control
+  m_pool.rbPerSubChannel = m_RbPerSubChannel;
   //pool.scCpLen.cplen = LteRrcSap::SlCpLen::NORMAL;
   if (m_scCpLen == "NORMAL")
     {

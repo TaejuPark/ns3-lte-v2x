@@ -850,6 +850,7 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n)
     Ptr<LteUePhy> phy = CreateObject<LteUePhy> (slPhy, slPhy);
     phy->SetSlSpectrumPhy(slPhy);
     slPhy->SetAttribute("HalfDuplexPhy", PointerValue(slPhy)); // pointer to sl spectrumphy
+    slPhy->SetRbPerSubChannel (15);
           
     Ptr<LteSlChunkProcessor> pSlSinr = Create<LteSlChunkProcessor> ();
     pSlSinr->AddCallback (MakeCallback (&LteSpectrumPhy::UpdateSlSinrPerceived, slPhy));

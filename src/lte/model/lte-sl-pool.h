@@ -247,8 +247,8 @@ public:
   */
   std::vector< std::vector<uint8_t> > GetValidAllocations ();
 
-  uint8_t GetNSubChannel();
-  uint8_t GetSubChannelRbStartIndex(uint8_t subChannel);
+  uint32_t GetNSubChannel();
+  uint32_t GetSubChannelRbStartIndex(uint32_t subChannel);
 protected:
   /**
    * Initialize the Sidelink communication pool
@@ -336,8 +336,9 @@ private:
    */
   void ComputeNumberOfPsschResources ();
 
-  uint8_t m_nSubChannel; // the number of subchannel in a subframe
-  std::vector <uint8_t> m_subChannelRbIndex; // the index of PRBs where each subchannel start
+  uint32_t m_nSubChannel; // the number of subchannel in a subframe
+  uint32_t m_RbPerSubChannel;
+  std::vector <uint32_t> m_subChannelRbIndex; // the index of PRBs where each subchannel start
   uint8_t m_reserveCount;
   
   /**

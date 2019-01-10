@@ -298,6 +298,13 @@ LteSlResourcePoolFactory::SetControlPeriod (std::string period)
 }
 
 void
+LteSlResourcePoolFactory::SetRbPerSubChannel (uint32_t rbPerSubChannel)
+{
+  NS_LOG_FUNCTION (this);
+  m_RbPerSubChannel = rbPerSubChannel;
+}
+
+void
 LteSlResourcePoolFactory::SetControlPrbNum (int8_t prbNum)
 {
   NS_LOG_FUNCTION (this << prbNum);

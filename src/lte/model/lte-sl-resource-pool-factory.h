@@ -65,6 +65,8 @@ public:
    */
   void SetControlPeriod (std::string period);
 
+  void SetRbPerSubChannel (uint32_t rbPerSubChannel);
+
   /**
    * Sets the number of PRBs in  the control channel (from the start up and the end down)
    * \param prbNum The number of PRBs
@@ -370,6 +372,7 @@ protected:
   int16_t m_scOffset; //!< offset when the control channel starts (subframe)
   //int m_scBitmapSize;
   int64_t m_scBitmapValue; //!< the bitmap specifying which subframe to use in the control channel
+  uint32_t m_RbPerSubChannel;
 
   // Data
   std::string m_dataCpLen; //!< cyclic prefix for the shared channel

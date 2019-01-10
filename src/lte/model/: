@@ -788,7 +788,6 @@ private:
   Ptr<AntennaModel> m_antenna; ///< the antenna model
   Ptr<NetDevice> m_device; ///< the device
 
-  uint32_t m_RbPerSubChannel;
   Ptr<SpectrumChannel> m_channel; ///< the channel
 
   Ptr<const SpectrumModel> m_rxSpectrumModel; ///< the spectrum model

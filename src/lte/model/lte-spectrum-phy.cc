@@ -275,23 +275,6 @@ LteSpectrumPhy::LteSpectrumPhy ()
     }
   
   m_slRxRbStartIdx = 0;
-  if (m_rssiMap.size()==0)
-    {
-      // Create RSSI Map
-      NS_LOG_LOGIC("Create RSSI Map");
-      for (int subChannel = 0; subChannel < 5; subChannel++)
-        {
-          std::vector<double> temp;
-          std::vector<double> temp2;
-          m_rssiMap.push_back(temp);
-          m_rsrpMap.push_back(temp2);
-          for (int subFrame = 0; subFrame < 1000; subFrame++)
-            {
-              m_rssiMap[subChannel].push_back(0.0);
-              m_rsrpMap[subChannel].push_back(0.0);
-            }
-        }
-    }
 }
 
 
@@ -499,6 +482,43 @@ LteSpectrumPhy::SetChannel (Ptr<SpectrumChannel> c)
 {
   NS_LOG_FUNCTION (this << c);
   m_channel = c;
+}
+
+void
+LteSpectrumPhy::SetRbPerSubChannel (uint32_t rbPerSubChannel)
+{
+  NS_LOG_FUNCTION (this);
+  m_RbPerSubChannel = rbPerSubChannel;
+  InitRssiRsrpMap ();
+}
+
+void
+LteSpectrumPhy::InitRssiRsrpMap ()
+{
+  NS_LOG_FUNCTION (this);
+  uint32_t nSubChannel = std::ceil(50 / m_RbPerSubChannel);
+
+  NS_ASSERT (m_rssiMap.size()==0);
+  for (uint32_t subChannel = 0; subChannel < nSubChannel; subChannel++)
+    {
+      std::vector<double> temp;
+      m_rssiMap.push_back(temp);
+      for (int subFrame = 0; subFrame < 1000; subFrame++)
+        {
+          m_rssiMap[subChannel].push_back(0.0);
+        }
+    }
+
+  NS_ASSERT (m_rsrpMap.size()==0);
+  for (uint32_t subChannel = 0; subChannel < nSubChannel; subChannel++)
+    {
+      std::vector<double> temp;
+      m_rsrpMap.push_back(temp);
+      for (int subFrame = 0; subFrame < 1000; subFrame++)
+        {
+          m_rsrpMap[subChannel].push_back(0.0);
+        }
+    }
 }
 
 Ptr<SpectrumChannel> 

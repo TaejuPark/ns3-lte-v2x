@@ -1493,13 +1493,13 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             std::vector<std::vector<double>> rssiMap = m_uePhySapProvider->GetRssiMap();
                             std::vector<std::vector<double>> rsrpMap = m_uePhySapProvider->GetRsrpMap();
                             NS_LOG_INFO ("Succeed getting RSSI Map");
-                            bool candidates[6][101] = {false, };
-                            double avrg_rsrp[6][101] = {0.0, };
+                            bool candidates[3][100] = {false, };
+                            double avrg_rsrp[3][100] = {0.0, };
 
                             // monitor check
-                            for (unsigned int idx_sc = 0; idx_sc < rsrpMap.size(); idx_sc++)
+                            for (uint32_t idx_sc = 0; idx_sc < poolIt->second.m_pool->GetNSubChannel(); idx_sc++)
                               {
-                                for (unsigned int idx_sf = 0; idx_sf < rsrpMap[idx_sc].size(); idx_sf++)
+                                for (uint32_t idx_sf = 0; idx_sf < rsrpMap[idx_sc].size(); idx_sf++)
                                   {
                                     avrg_rsrp[idx_sc][idx_sf%100] += rsrpMap[idx_sc][idx_sf];
                                     if (!m_not_sensed_subframe[idx_sf])
@@ -1515,7 +1515,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             while (candidate_count < (uint32_t)(500.0 * 0.2))
                               { 
                                 candidate_count = 0;
-                                for (unsigned int idx_sc = 0; idx_sc < rsrpMap.size(); idx_sc++)
+                                for (uint32_t idx_sc = 0; idx_sc < poolIt->second.m_pool->GetNSubChannel(); idx_sc++)
                                   {
                                     for (unsigned int idx_sf = 0; idx_sf < 100; idx_sf++)
                                       {

@@ -265,10 +265,12 @@ SidelinkCommResourcePool::SetV2XPool (LteRrcSap::SlPreconfigCommPool pool)
   m_dataTfResourceConfig = pool.dataTfResourceConfig;
   m_trptSubset = pool.trptSubset;
 
-  m_nSubChannel = 5;
-  for(int i = 0; i < m_nSubChannel; i++)
+  m_RbPerSubChannel = pool.rbPerSubChannel;
+  m_nSubChannel = std::ceil(50/m_RbPerSubChannel);
+  
+  for(unsigned int i = 0; i < m_nSubChannel; i++)
     {
-      m_subChannelRbIndex.push_back(i*10);
+      m_subChannelRbIndex.push_back(i * m_RbPerSubChannel);
     }
 
   Initialize ();
@@ -289,10 +291,12 @@ SidelinkCommResourcePool::SetPool (LteRrcSap::SlPreconfigCommPool pool)
   m_dataHoppingConfig = pool.dataHoppingConfig;
   m_dataTfResourceConfig = pool.dataTfResourceConfig;
   m_trptSubset = pool.trptSubset;
-  m_nSubChannel = 5;
-  for(int i = 0; i < m_nSubChannel; i++)
+
+  m_RbPerSubChannel = pool.rbPerSubChannel;
+  m_nSubChannel = std::ceil(50/m_RbPerSubChannel);
+  for(unsigned int i = 0; i < m_nSubChannel; i++)
    {
-     m_subChannelRbIndex.push_back(i*10);
+     m_subChannelRbIndex.push_back(i*m_RbPerSubChannel);
    }
   Initialize ();
 }
@@ -812,13 +816,13 @@ SidelinkCommResourcePool::GetValidAllocations ()
   return allValidRBstartIndexes;
 }
 
-uint8_t
+uint32_t
 SidelinkCommResourcePool::GetNSubChannel()
 {
   return m_nSubChannel;
 }
-uint8_t
-SidelinkCommResourcePool::GetSubChannelRbStartIndex(uint8_t subChannel)
+uint32_t
+SidelinkCommResourcePool::GetSubChannelRbStartIndex(uint32_t subChannel)
 {
   return m_subChannelRbIndex.at(subChannel);
 }
