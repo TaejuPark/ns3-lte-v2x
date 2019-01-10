@@ -41,5 +41,12 @@ LteUePhySapProvider::GetRssiMap ()
   return temp;
 }
 
+std::vector<std::vector<double>>
+LteUePhySapProvider::GetRsrpMap ()
+{
+  std::vector<std::vector<double>> temp;
+  return temp;
+}
+
 
 } // namespace ns3

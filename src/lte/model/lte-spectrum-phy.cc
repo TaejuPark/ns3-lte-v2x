@@ -274,6 +274,7 @@ LteSpectrumPhy::LteSpectrumPhy ()
       m_txModeGain.push_back (1.0);
     }
   
+  m_slRxRbStartIdx = 0;
   if (m_rssiMap.size()==0)
     {
       // Create RSSI Map
@@ -281,10 +282,13 @@ LteSpectrumPhy::LteSpectrumPhy ()
       for (int subChannel = 0; subChannel < 5; subChannel++)
         {
           std::vector<double> temp;
+          std::vector<double> temp2;
           m_rssiMap.push_back(temp);
+          m_rsrpMap.push_back(temp2);
           for (int subFrame = 0; subFrame < 1000; subFrame++)
             {
               m_rssiMap[subChannel].push_back(0.0);
+              m_rsrpMap[subChannel].push_back(0.0);
             }
         }
     }
@@ -1215,6 +1219,10 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
                     {
                       if (*it != 0)
                         {
+                          if (used_rb_cnt == 0)
+                            {
+                              m_slRxRbStartIdx = i;
+                            }
                           NS_LOG_INFO ("SL Message arriving on RB " << i);
                           rbMap.push_back (i);
                           used_rb_cnt++;
@@ -2095,6 +2103,7 @@ LteSpectrumPhy::EndRxSlData ()
         }
     }
 
+  UpdateRssiMap();
   if (ctrlMessageFound)
     {
       if (!error)
@@ -2307,6 +2316,13 @@ LteSpectrumPhy::GetRssiMap ()
   return m_rssiMap;
 }
 
+std::vector<std::vector<double>>
+LteSpectrumPhy::GetRsrpMap ()
+{
+  NS_LOG_FUNCTION (this);
+  return m_rsrpMap;
+}
+
 void
 LteSpectrumPhy::UpdateRssiMap ()
 {
@@ -2314,6 +2330,8 @@ LteSpectrumPhy::UpdateRssiMap ()
   uint16_t rbNum = 0;
   double rssiSum = 0.0;
   double rssi = 0.0;
+  double rsrpSum = 0.0;
+  double rsrp_dBm;
       
   for (unsigned int index = 0; index < m_slSignalPerceived.size(); index++)
     {
@@ -2326,19 +2344,20 @@ LteSpectrumPhy::UpdateRssiMap ()
           rbNum++;
           double interfPlusNoisePowerTxW = ((*itIntN) * 180000.0) / 12.0;
           double signalPowerTxW = ((*itPj) * 180000.0) / 12.0;
+          rsrpSum += signalPowerTxW;
           rssiSum += (2 * (interfPlusNoisePowerTxW + signalPowerTxW));
         }
          
       //TODO: How to get subChannel and subFrame information from signal.
       // To get subChannel information, signal should have subchannel information.
-      int subChannel = 0;
+      int subChannel = std::ceil(m_slRxRbStartIdx / 15);
       int64_t subFrame = Simulator::Now ().GetMilliSeconds () % 1000;
-          
+
       rssi = rssiSum / (double)rbNum;
-      if (m_rssiMap[subChannel][subFrame] < rssi)
-        {
-          m_rssiMap[subChannel][subFrame] = rssi;
-        }
+      m_rssiMap[subChannel][subFrame] = rssi;
+
+      rsrp_dBm = 10 * log10 (1000 * (rsrpSum / static_cast<double> (rbNum)));
+      m_rsrpMap[subChannel][subFrame] = rsrp_dBm;
     }
 }
 

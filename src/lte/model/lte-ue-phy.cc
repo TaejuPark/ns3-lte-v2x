@@ -83,6 +83,7 @@ public:
    */
   UeMemberLteUePhySapProvider (LteUePhy* phy);
   virtual std::vector<std::vector<double>> GetRssiMap ();
+  virtual std::vector<std::vector<double>> GetRsrpMap ();
 
   // inherited from LtePhySapProvider
   virtual void SendMacPdu (Ptr<Packet> p);
@@ -106,6 +107,13 @@ UeMemberLteUePhySapProvider::GetRssiMap ()
 {
   return m_phy->DoGetRssiMap ();
 }
+
+std::vector<std::vector<double>>
+UeMemberLteUePhySapProvider::GetRsrpMap ()
+{
+  return m_phy->DoGetRsrpMap ();
+}
+
 void
 UeMemberLteUePhySapProvider::SendMacPdu (Ptr<Packet> p)
 {
@@ -580,6 +588,14 @@ LteUePhy::DoGetRssiMap ()
   NS_LOG_FUNCTION (this);
   return m_sidelinkSpectrumPhy->GetRssiMap();
 }
+
+std::vector<std::vector<double>>
+LteUePhy::DoGetRsrpMap ()
+{
+  NS_LOG_FUNCTION (this);
+  return m_sidelinkSpectrumPhy->GetRsrpMap();
+}
+
 void
 LteUePhy::DoSendMacPdu (Ptr<Packet> p)
 {

@@ -700,6 +700,7 @@ public:
   void SetDiscNumRetx (uint8_t retx);
   
   std::vector<std::vector<double>> GetRssiMap ();
+  std::vector<std::vector<double>> GetRsrpMap ();
 
   /**
   * TracedCallback signature for TB drop.
@@ -799,6 +800,7 @@ private:
   State m_state; ///< the state
   Time m_firstRxStart; ///< the first receive start
   Time m_firstRxDuration; ///< the first receive duration
+  uint32_t m_slRxRbStartIdx;
 
   TracedCallback<Ptr<const PacketBurst> > m_phyTxStartTrace; ///< the phy transmit start trace callback
   TracedCallback<Ptr<const PacketBurst> > m_phyTxEndTrace; ///< the phy transmit end trace callback
@@ -817,6 +819,7 @@ private:
   Ptr<LteInterference> m_interferenceCtrl; ///< the control interference
 
   std::vector<std::vector<double>> m_rssiMap; // rssi map for 5 sub-channel, 100 subframe in a SC period.
+  std::vector<std::vector<double>> m_rsrpMap; // rsrp map for 5 sub-channel, 100 subframe in a SC period.
 
   uint16_t m_cellId; ///< the cell ID
   

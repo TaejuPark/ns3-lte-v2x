@@ -42,6 +42,7 @@ public:
   virtual ~LteUePhySapProvider ();
 
   virtual std::vector<std::vector<double>> GetRssiMap ();
+  virtual std::vector<std::vector<double>> GetRsrpMap ();
 
   /**
   * \brief Send The MAC PDU to the channel

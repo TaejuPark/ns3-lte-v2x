@@ -1490,17 +1490,18 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
         
                             // pick a random subChannel for transmission
                             // TODO: implement SPS with rssiMap;
-                            std::vector<std::vector<double>> rssiMap =  m_uePhySapProvider->GetRssiMap();
+                            std::vector<std::vector<double>> rssiMap = m_uePhySapProvider->GetRssiMap();
+                            std::vector<std::vector<double>> rsrpMap = m_uePhySapProvider->GetRsrpMap();
                             NS_LOG_INFO ("Succeed getting RSSI Map");
                             bool candidates[6][101] = {false, };
                             double avrg_rsrp[6][101] = {0.0, };
 
                             // monitor check
-                            for (unsigned int idx_sc = 0; idx_sc < rssiMap.size(); idx_sc++)
+                            for (unsigned int idx_sc = 0; idx_sc < rsrpMap.size(); idx_sc++)
                               {
-                                for (unsigned int idx_sf = 0; idx_sf < rssiMap[idx_sc].size(); idx_sf++)
+                                for (unsigned int idx_sf = 0; idx_sf < rsrpMap[idx_sc].size(); idx_sf++)
                                   {
-                                    avrg_rsrp[idx_sc][idx_sf%100] += rssiMap[idx_sc][idx_sf];
+                                    avrg_rsrp[idx_sc][idx_sf%100] += rsrpMap[idx_sc][idx_sf];
                                     if (!m_not_sensed_subframe[idx_sf])
                                       {
                                         candidates[idx_sc][idx_sf%100] = true;
@@ -1514,7 +1515,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             while (candidate_count < (uint32_t)(500.0 * 0.2))
                               { 
                                 candidate_count = 0;
-                                for (unsigned int idx_sc = 0; idx_sc < rssiMap.size(); idx_sc++)
+                                for (unsigned int idx_sc = 0; idx_sc < rsrpMap.size(); idx_sc++)
                                   {
                                     for (unsigned int idx_sf = 0; idx_sf < 100; idx_sf++)
                                       {
@@ -1534,7 +1535,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             // serialize the candidate resources in one dimension vector for random choice.
                             std::vector<unsigned int> second_candidates_sc;
                             std::vector<unsigned int> second_candidates_sf;
-                            for (unsigned int idx_sc = 0; idx_sc < rssiMap.size(); idx_sc++)
+                            for (unsigned int idx_sc = 0; idx_sc < rsrpMap.size(); idx_sc++)
                               {
                                 for (unsigned int idx_sf = 0; idx_sf < 100; idx_sf++)
                                   {
@@ -1542,7 +1543,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                       {
                                         second_candidates_sc.push_back(idx_sc);
                                         second_candidates_sf.push_back(idx_sf);
-                                        NS_LOG_DEBUG ("[CANDIDATE] SubFrame: "<<idx_sf<<", SubChannel: "<<idx_sc);
+                                        NS_LOG_DEBUG ("[CANDIDATE] SubFrame: "<<idx_sf<<", SubChannel: "<<idx_sc<<", Avg_RSRP: "<<avrg_rsrp[idx_sc][idx_sf]/10);
                                       }
                                   }
                               }
