@@ -1498,6 +1498,8 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             // TODO: implement SPS with rssiMap;
                             std::vector<std::vector<double>> rssiMap = m_uePhySapProvider->GetRssiMap();
                             std::vector<std::vector<double>> rsrpMap = m_uePhySapProvider->GetRsrpMap();
+                            uint32_t scPeriod = poolIt->second.m_pool->GetScPeriod ();
+
                             NS_LOG_INFO ("Succeed getting RSSI Map");
                             bool candidates[3][100] = {false, };
                             double avrg_rsrp[3][100] = {0.0, };
@@ -1507,10 +1509,10 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                               {
                                 for (uint32_t idx_sf = 0; idx_sf < rsrpMap[idx_sc].size(); idx_sf++)
                                   {
-                                    avrg_rsrp[idx_sc][idx_sf%100] += rsrpMap[idx_sc][idx_sf];
+                                    avrg_rsrp[idx_sc][idx_sf%scPeriod] += rsrpMap[idx_sc][idx_sf];
                                     if (!m_not_sensed_subframe[idx_sf])
                                       {
-                                        candidates[idx_sc][idx_sf%100] = true;
+                                        candidates[idx_sc][idx_sf%scPeriod] = true;
                                       }
                                   }
                               }
@@ -1523,7 +1525,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                 candidate_count = 0;
                                 for (uint32_t idx_sc = 0; idx_sc < poolIt->second.m_pool->GetNSubChannel(); idx_sc++)
                                   {
-                                    for (unsigned int idx_sf = 0; idx_sf < 100; idx_sf++)
+                                    for (unsigned int idx_sf = 0; idx_sf < scPeriod; idx_sf++)
                                       {
                                         if (avrg_rsrp[idx_sc][idx_sf] / 10 > rsrp_threshold)
                                           {
@@ -1541,7 +1543,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
 
                             for (uint32_t idx_sc = 0; idx_sc < poolIt->second.m_pool->GetNSubChannel(); idx_sc++)
                               {
-                                for (unsigned int idx_sf = 0; idx_sf < 100; idx_sf++)
+                                for (unsigned int idx_sf = 0; idx_sf < scPeriod; idx_sf++)
                                   {
                                     if (avrg_rsrp[idx_sc][idx_sf] / 10 < rsrp_threshold)
                                       {
@@ -1555,7 +1557,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             std::vector<unsigned int> second_candidates_sf;
                             for (unsigned int idx_sc = 0; idx_sc < rsrpMap.size(); idx_sc++)
                               {
-                                for (unsigned int idx_sf = 0; idx_sf < 100; idx_sf++)
+                                for (unsigned int idx_sf = 0; idx_sf < scPeriod; idx_sf++)
                                   {
                                     if (candidates[idx_sc][idx_sf])
                                       {
@@ -1590,7 +1592,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             grantV2V.m_subChannelIndex = second_candidates_sc[randChosenResource];
                             //grantV2V.m_subChannelIndex = m_ueSelectedUniformVariable->GetInteger (0, poolIt->second.m_pool->GetNSubChannel()-1);
                             
-                            m_uePhySapProvider->MoveSensingWindow(frameNo%1000);
+                            m_uePhySapProvider->MoveSensingWindow(frameNo%1000, scPeriod);
                             NS_LOG_INFO("Succeed to get m_subChannelIndex for v2v transmit grant"); 
                             grantV2V.m_rbStart = poolIt->second.m_pool->GetSubChannelRbStartIndex(grantV2V.m_subChannelIndex);
 

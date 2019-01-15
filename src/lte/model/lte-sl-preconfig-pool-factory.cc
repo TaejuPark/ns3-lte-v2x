@@ -94,6 +94,10 @@ LteSlPreconfigPoolFactory::CreatePool ()
     {
       m_pool.scPeriod.period = LteRrcSap::SlPeriodComm::sf40;
     }
+  else if (m_period == "sf48")
+    {
+      m_pool.scPeriod.period = LteRrcSap::SlPeriodComm::sf48;
+    }
   else if (m_period == "sf60")
     {
       m_pool.scPeriod.period = LteRrcSap::SlPeriodComm::sf60;

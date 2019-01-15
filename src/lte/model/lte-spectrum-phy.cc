@@ -2138,17 +2138,25 @@ LteSpectrumPhy::EndRxSlData ()
 
           params.m_rxPosX = m_mobility->GetPosition ().x;
           params.m_rxPosY = m_mobility->GetPosition ().y;
-          NS_LOG_DEBUG("rx position.x: "<<params.m_rxPosX<<", position.y: "<<params.m_rxPosY);
-          //NS_LOG_DEBUG("TXID: "<<params.m_rnti);
-          //Ptr<Node> nod = m_nodeList.Get(params.m_rnti);
-          //Ptr<MobilityModel> mm = m_nodeList.Get(params.m_rnti) -> GetObject<MobilityModel> ();
           params.m_txPosX = m_nodeList.Get(params.m_rnti-1) -> GetObject<MobilityModel> () -> GetPosition ().x;
           params.m_txPosY = m_nodeList.Get(params.m_rnti-1) -> GetObject<MobilityModel> () -> GetPosition ().y;
 
-          NS_LOG_DEBUG("tx position.x: "<<params.m_txPosX<<", position.y: "<<params.m_txPosY);
+          double deltaX = params.m_rxPosX - params.m_txPosX;
+          double deltaY = params.m_rxPosY - params.m_txPosY;
+          double distRxTx = std::sqrt(deltaX * deltaX + deltaY * deltaY);
+          params.m_neighbor = 0;
+          if (distRxTx < 200.0)
+            {
+              params.m_neighbor = 1;
+              m_slPscchReception (params);
+            }
+          else
+            {
+              params.m_neighbor = 0;
+            }
                   
           // Call trace
-          m_slPscchReception (params);
+          //m_slPscchReception (params);
         }
     }
 
@@ -2377,10 +2385,10 @@ LteSpectrumPhy::GetRsrpMap ()
 }
 
 void
-LteSpectrumPhy::MoveSensingWindow(uint32_t removeIdx)
+LteSpectrumPhy::MoveSensingWindow(uint32_t removeIdx, uint32_t scPeriod)
 {
   NS_LOG_FUNCTION (this);
-  for (unsigned int index = removeIdx; index < removeIdx + 100; index++)
+  for (unsigned int index = removeIdx; index < removeIdx + scPeriod; index++)
   {
     for (unsigned int subChannel = 0; subChannel < 3; subChannel++)
       {

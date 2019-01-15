@@ -313,7 +313,8 @@ PhyRxStatsCalculator::SlPscchReception (SlPhyReceptionStatParameters params)
   outFile << params.m_txPosY << "\t";
   outFile << params.m_rxPosX << "\t";
   outFile << params.m_rxPosY << "\t";
-  outFile << (uint32_t) params.m_correctness << std::endl;
+  outFile << (uint32_t) params.m_correctness << "\t";
+  outFile << params.m_neighbor << std::endl;
   outFile.close ();
 }
 

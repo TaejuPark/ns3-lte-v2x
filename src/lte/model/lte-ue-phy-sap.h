@@ -43,7 +43,7 @@ public:
 
   virtual std::vector<std::vector<double>> GetRssiMap ();
   virtual std::vector<std::vector<double>> GetRsrpMap ();
-  virtual void MoveSensingWindow (uint32_t removeIdx);
+  virtual void MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod);
 
   /**
   * \brief Send The MAC PDU to the channel

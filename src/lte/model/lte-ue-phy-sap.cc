@@ -49,7 +49,7 @@ LteUePhySapProvider::GetRsrpMap ()
 }
 
 void
-LteUePhySapProvider::MoveSensingWindow (uint32_t removeIdx)
+LteUePhySapProvider::MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod)
 {
 }
 

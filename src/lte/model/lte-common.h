@@ -294,6 +294,7 @@ struct SlPhyReceptionStatParameters
   int32_t m_rxPosY;
   int32_t m_txPosX;
   int32_t m_txPosY;
+  int32_t m_neighbor;
   /**
    *  TracedCallback signature.
    *

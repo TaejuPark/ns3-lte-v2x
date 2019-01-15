@@ -120,7 +120,7 @@ main (int argc, char *argv[])
   uint32_t ktrp = 1;               // Transmissions opportunities in a Time Repetition Pattern(number of subframes to transmit on)
   uint32_t pscchRbs = 22;         // PSCCH pool size in RBs. Note, the PSCCH occupied bandwidth will be at least twice this amount.
   std::string pscchBitmapHexstring = "0x00000000FF"; // PSCCH time bitmap [40 bits]
-  uint32_t slPeriod = 100;         // Length of Sidelink period in milliseconds
+  uint32_t slPeriod = 48;         // Length of Sidelink period in milliseconds
   bool ctrlErrorModelEnabled = true; // Enable error model in the PSCCH
   bool dropOnCollisionEnabled = false; // Drop PSCCH PSSCH messages on conflicting scheduled resources
   bool  enableNsLogs = true; // If enabled will output NS LOGs

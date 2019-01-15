@@ -84,7 +84,7 @@ public:
   UeMemberLteUePhySapProvider (LteUePhy* phy);
   virtual std::vector<std::vector<double>> GetRssiMap ();
   virtual std::vector<std::vector<double>> GetRsrpMap ();
-  virtual void MoveSensingWindow (uint32_t removeIdx);
+  virtual void MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod);
 
   // inherited from LtePhySapProvider
   virtual void SendMacPdu (Ptr<Packet> p);
@@ -116,9 +116,9 @@ UeMemberLteUePhySapProvider::GetRsrpMap ()
 }
 
 void
-UeMemberLteUePhySapProvider::MoveSensingWindow (uint32_t removeIdx)
+UeMemberLteUePhySapProvider::MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod)
 {
-  m_phy->DoMoveSensingWindow (removeIdx);
+  m_phy->DoMoveSensingWindow (removeIdx, scPeriod);
 }
 
 void
@@ -604,9 +604,9 @@ LteUePhy::DoGetRsrpMap ()
 }
 
 void
-LteUePhy::DoMoveSensingWindow (uint32_t removeIdx)
+LteUePhy::DoMoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod)
 {
-  m_sidelinkSpectrumPhy->MoveSensingWindow (removeIdx);
+  m_sidelinkSpectrumPhy->MoveSensingWindow (removeIdx, scPeriod);
 }
 
 void

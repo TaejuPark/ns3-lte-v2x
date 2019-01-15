@@ -322,7 +322,6 @@ SidelinkCommResourcePool::GetSchedulingType ()
   return m_type;
 }
 
-
 SidelinkCommResourcePool::SubframeInfo
 SidelinkCommResourcePool::GetCurrentScPeriod (uint32_t frameNo, uint32_t subframeNo)
 {
