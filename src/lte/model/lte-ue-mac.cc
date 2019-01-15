@@ -1518,6 +1518,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                               }
                             
                             // signal power (rsrp) check;
+                            int refcnt = std::ceil(1000/scPeriod);
                             double rsrp_threshold = -110;
                             uint32_t candidate_count = 0;
                             while (true)
@@ -1528,7 +1529,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                   {
                                     for (unsigned int idx_sf = 0; idx_sf < scPeriod; idx_sf++)
                                       {
-                                        if (avrg_rsrp[idx_sc][idx_sf] / 10 > rsrp_threshold)
+                                        if (avrg_rsrp[idx_sc][idx_sf] / (double)refcnt > rsrp_threshold)
                                           {
                                             candidate_count++;
                                           }
@@ -1546,7 +1547,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                               {
                                 for (unsigned int idx_sf = 0; idx_sf < scPeriod; idx_sf++)
                                   {
-                                    if (avrg_rsrp[idx_sc][idx_sf] / 10 < rsrp_threshold)
+                                    if (avrg_rsrp[idx_sc][idx_sf] / (double)refcnt < rsrp_threshold)
                                       {
                                         candidates[idx_sc][idx_sf] = false;
                                       }
