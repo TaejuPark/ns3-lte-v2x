@@ -1523,6 +1523,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             while (true)
                               { 
                                 candidate_count = 0;
+                                uint32_t total_ru = poolIt->second.m_pool->GetNSubChannel() * scPeriod;
                                 for (uint32_t idx_sc = 0; idx_sc < poolIt->second.m_pool->GetNSubChannel(); idx_sc++)
                                   {
                                     for (unsigned int idx_sf = 0; idx_sf < scPeriod; idx_sf++)
@@ -1534,7 +1535,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                       }
                                   }
 
-                                if (candidate_count > (uint32_t)(300 * 0.2))
+                                if (candidate_count > (uint32_t)(total_ru * 0.2))
                                   {
                                     break;
                                   }
