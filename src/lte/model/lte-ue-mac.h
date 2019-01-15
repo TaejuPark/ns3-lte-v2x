@@ -85,6 +85,7 @@ public:
   * \param index The component carrier ID
   */
   void SetComponentCarrierId (uint8_t index);
+  void SetUEID (uint32_t ueid);
 
   /**
   * \brief Get the PHY SAP user
@@ -396,6 +397,7 @@ private:
   std::vector < uint8_t > m_miUlHarqProcessesPacketTimer; ///< timer for packet life in the buffer
 
   uint16_t m_rnti; ///< RNTI
+  uint32_t m_ueid;
 
   bool m_rachConfigured; ///< is RACH configured?
   LteUeCmacSapProvider::RachConfig m_rachConfig; ///< RACH configuration

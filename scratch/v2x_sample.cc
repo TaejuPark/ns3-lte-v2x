@@ -166,6 +166,7 @@ main (int argc, char *argv[])
       LogComponentEnable ("LteSidelinkHelper", logLevel);
       LogComponentEnable ("LteHelper", logLevel);
       LogComponentEnable ("LteAmc", logLevel);
+      LogComponentEnable ("Ns2MobilityHelper", logLevel);
     }
 
 
@@ -292,7 +293,7 @@ main (int argc, char *argv[])
     }
   */
   // Load scenario from SUMO output
-  Ns2MobilityHelper acosta = Ns2MobilityHelper("/home/taeju/git-projects/ns3-lte-v2x/berlin_ns2_mobility.tcl");
+  Ns2MobilityHelper acosta = Ns2MobilityHelper("/home/taeju/git-projects/ns3-lte-v2x/detroit_ns2_mobility.tcl");
   NodeContainer ueResponders;
   ueResponders.Create(numGroups);
   ueAllNodes.Add (ueResponders);

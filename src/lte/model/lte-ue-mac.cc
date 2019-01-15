@@ -469,6 +469,12 @@ LteUeMac::SetComponentCarrierId (uint8_t index)
 }
 
 void
+LteUeMac::SetUEID (uint32_t ueid)
+{
+  m_ueid = ueid;
+}
+
+void
 LteUeMac::DoTransmitPdu (LteMacSapProvider::TransmitPduParameters params)
 {
   NS_LOG_FUNCTION (this);
@@ -1854,7 +1860,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                   sci.m_tbSize = poolIt->second.m_currentGrantV2V.m_tbSize;
                   sci.m_frameNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.frameNo;
                   sci.m_subframeNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.subframeNo;
-                  sci.m_rnti = m_rnti;
+                  sci.m_rnti = m_ueid;
                   sci.m_groupDstId = (poolIt->first & 0xFF);
                   msg->SetSciF1 (sci);
                 }
@@ -1862,7 +1868,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                 {
                   //create SCI format 0 message
                   SciF0ListElement_s sci;
-                  sci.m_rnti = m_rnti;
+                  sci.m_rnti = m_ueid;
                   sci.m_mcs = poolIt->second.m_currentGrant.m_mcs;
                   sci.m_tbSize = poolIt->second.m_currentGrant.m_tbSize;
                   sci.m_resPscch = poolIt->second.m_currentGrant.m_resPscch;

@@ -852,7 +852,7 @@ private:
    * \return Pointer to the created device
    */
   Ptr<NetDevice> InstallSingleUeDevice (Ptr<Node> n);
-  Ptr<NetDevice> InstallSingleVueDevice (Ptr<Node> n);
+  Ptr<NetDevice> InstallSingleVueDevice (Ptr<Node> n, NodeContainer c, uint32_t nodeIdx);
 
   /**
    * The actual function to trigger a manual handover.

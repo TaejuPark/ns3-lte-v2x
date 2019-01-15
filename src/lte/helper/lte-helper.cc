@@ -548,6 +548,7 @@ NetDeviceContainer
 LteHelper::InstallUeDevice (NodeContainer c)
 {
   NS_LOG_FUNCTION (this);
+  uint32_t nodeIdx = 1;
   NetDeviceContainer devices;
   for (NodeContainer::Iterator i = c.Begin (); i != c.End (); ++i)
     {
@@ -555,13 +556,14 @@ LteHelper::InstallUeDevice (NodeContainer c)
       Ptr<NetDevice> device;
       if(m_v2v)
       {
-        device = InstallSingleVueDevice (node);
+        device = InstallSingleVueDevice (node, c, nodeIdx);
       }
       else
       {
         device = InstallSingleUeDevice (node);
       }
       devices.Add (device);
+      nodeIdx++;
     }
   return devices;
 }
@@ -826,7 +828,7 @@ LteHelper::InstallSingleEnbDevice (Ptr<Node> n)
 }
 
 Ptr<NetDevice>
-LteHelper::InstallSingleVueDevice (Ptr<Node> n)
+LteHelper::InstallSingleVueDevice (Ptr<Node> n, NodeContainer c, uint32_t nodeIdx)
 {
   NS_LOG_FUNCTION (this);
 
@@ -839,6 +841,7 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n)
   cc->SetAsPrimary(true);
   Ptr<LteUeMac> mac = CreateObject<LteUeMac> ();
   cc->SetMac (mac);
+  mac->SetUEID (nodeIdx);
   ueCcMap.insert(std::pair<uint8_t, Ptr<ComponentCarrierUe>> (0, cc));
     
   for(std::map<uint8_t, Ptr<ComponentCarrierUe>>::iterator it = ueCcMap.begin(); it != ueCcMap.end(); ++it)
@@ -868,6 +871,7 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n)
 
     Ptr<MobilityModel> mm = n->GetObject<MobilityModel> ();
     slPhy->SetMobility(mm);
+    slPhy->SetNodeList(c);
 
     Ptr<AntennaModel> antenna = (m_ueAntennaModelFactory.Create ())->GetObject<AntennaModel> ();
     slPhy->SetAntenna (antenna);

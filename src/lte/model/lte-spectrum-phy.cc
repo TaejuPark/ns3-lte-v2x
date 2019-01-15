@@ -468,6 +468,12 @@ LteSpectrumPhy::SetDevice (Ptr<NetDevice> d)
   m_device = d;
 }
 
+void
+LteSpectrumPhy::SetNodeList (NodeContainer c)
+{
+  NS_LOG_FUNCTION (this);
+  m_nodeList = c;
+}
 
 void
 LteSpectrumPhy::SetMobility (Ptr<MobilityModel> m)
@@ -2102,28 +2108,51 @@ LteSpectrumPhy::EndRxSlData ()
           // Add PSCCH trace.
           NS_ASSERT (m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::SCI);
           Ptr<SciLteControlMessage> msg2 = DynamicCast<SciLteControlMessage> (m_rxPacketInfo[i].m_rxControlMessage);
-          SciF0ListElement_s sci = msg2->GetSciF0 ();
+          SciF0ListElement_s scif0 = msg2->GetSciF0 ();
+          SciF1ListElement_s scif1 = msg2->GetSciF1 ();
 
           SlPhyReceptionStatParameters params;
           params.m_timestamp = Simulator::Now ().GetMilliSeconds ();
           params.m_cellId = m_cellId;
           params.m_imsi = 0;       // it will be set by DlPhyTransmissionCallback in LteHelper
-          params.m_rnti = sci.m_rnti;
-          params.m_mcs = sci.m_mcs;
-          params.m_size = sci.m_tbSize;
-          params.m_rbStart = sci.m_rbStart;
-          params.m_rbLen = sci.m_rbLen;
-          params.m_resPscch = sci.m_resPscch;
-          params.m_groupDstId = sci.m_groupDstId;
-          params.m_iTrp = sci.m_trp;
-          params.m_hopping = sci.m_hopping;
+          params.m_rnti = scif0.m_rnti;
+          params.m_mcs = scif0.m_mcs;
+          params.m_size = scif0.m_tbSize;
+          params.m_rbStart = scif0.m_rbStart;
+          params.m_rbLen = scif0.m_rbLen;
+          params.m_resPscch = scif0.m_resPscch;
+          params.m_groupDstId = scif0.m_groupDstId;
+          params.m_iTrp = scif0.m_trp;
+          params.m_hopping = scif0.m_hopping;
           params.m_correctness = (uint8_t) !corrupt;
+
+          params.m_priority = scif1.m_priority;
+          params.m_rnti = scif1.m_rnti;
+          params.m_resReserve = scif1.m_resReserve;
+          params.m_frl = scif1.m_frl;
+          params.m_timeGap = scif1.m_timeGap;
+          params.m_reIndex = scif1.m_reIndex;
+          params.m_tbSize = scif1.m_tbSize;
+          params.m_frameNo = scif1.m_frameNo;
+          params.m_subframeNo = scif1.m_subframeNo;
+
+          params.m_rxPosX = m_mobility->GetPosition ().x;
+          params.m_rxPosY = m_mobility->GetPosition ().y;
+          NS_LOG_DEBUG("rx position.x: "<<params.m_rxPosX<<", position.y: "<<params.m_rxPosY);
+          //NS_LOG_DEBUG("TXID: "<<params.m_rnti);
+          //Ptr<Node> nod = m_nodeList.Get(params.m_rnti);
+          //Ptr<MobilityModel> mm = m_nodeList.Get(params.m_rnti) -> GetObject<MobilityModel> ();
+          params.m_txPosX = m_nodeList.Get(params.m_rnti-1) -> GetObject<MobilityModel> () -> GetPosition ().x;
+          params.m_txPosY = m_nodeList.Get(params.m_rnti-1) -> GetObject<MobilityModel> () -> GetPosition ().y;
+
+          NS_LOG_DEBUG("tx position.x: "<<params.m_txPosX<<", position.y: "<<params.m_txPosY);
+                  
           // Call trace
           m_slPscchReception (params);
         }
     }
 
-  UpdateRssiMap();
+  UpdateRssiRsrpMap();
   if (ctrlMessageFound)
     {
       if (!error)
@@ -2143,7 +2172,11 @@ LteSpectrumPhy::EndRxSlData ()
             }
         }
     }
-
+  
+  if (error)
+    {
+      NS_LOG_DEBUG (this << " RX ERROR");
+    }
   //Sidelink Discovery
   RxDiscovery();
 
@@ -2344,7 +2377,7 @@ LteSpectrumPhy::GetRsrpMap ()
 }
 
 void
-LteSpectrumPhy::UpdateRssiMap ()
+LteSpectrumPhy::UpdateRssiRsrpMap ()
 {
   NS_LOG_DEBUG (this);
   uint16_t rbNum = 0;

@@ -46,6 +46,7 @@
 #include <ns3/lte-sl-harq-phy.h>
 #include <ns3/lte-common.h>
 #include <ns3/lte-sl-pool.h>
+#include <ns3/node-container.h>
 
 namespace ns3 {
 
@@ -280,6 +281,7 @@ public:
   void SetRbPerSubChannel (uint32_t rbPerSubChannel);
   void InitRssiRsrpMap ();
   void SetChannel (Ptr<SpectrumChannel> c);
+  void SetNodeList (NodeContainer c);
   void SetMobility (Ptr<MobilityModel> m);
   void SetDevice (Ptr<NetDevice> d);
   Ptr<MobilityModel> GetMobility ();
@@ -757,7 +759,7 @@ private:
    */
   void SetSlRxGain (double gain);
 
-  void UpdateRssiMap ();
+  void UpdateRssiRsrpMap ();
   
   /**
    * \brief Get mean SINR function
@@ -785,6 +787,7 @@ private:
   void RxDiscovery ();
 
   Ptr<MobilityModel> m_mobility; ///< the mobility model
+  NodeContainer m_nodeList;
   Ptr<AntennaModel> m_antenna; ///< the antenna model
   Ptr<NetDevice> m_device; ///< the device
 

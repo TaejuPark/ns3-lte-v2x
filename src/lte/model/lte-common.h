@@ -279,6 +279,21 @@ struct SlPhyReceptionStatParameters
   uint8_t  m_iTrp; ///< Time recourse pattern (TRP) index
   uint8_t   m_groupDstId; ///< Group destination ID
 
+  // for V2X
+  uint8_t m_priority;
+  uint8_t m_resReserve;
+  uint16_t m_frl;
+  uint8_t m_timeGap;
+  uint8_t m_reIndex;
+  uint32_t m_tbSize;
+  uint32_t m_frameNo;
+  uint32_t m_subframeNo;
+
+  // Position
+  int32_t m_rxPosX;
+  int32_t m_rxPosY;
+  int32_t m_txPosX;
+  int32_t m_txPosY;
   /**
    *  TracedCallback signature.
    *

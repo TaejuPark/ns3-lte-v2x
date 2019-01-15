@@ -81,7 +81,7 @@ sites=$((1+6*$Rings*($Rings-1)/2)) #Number of cell sites
 #sectors=$(($sites*3)) #Total number of sectors, i.e., 3 sectors per site.
 sectors=1
 #GRP_SECTOR=$RESP #Groups per sectors
-GRP_SECTOR=153
+GRP_SECTOR=215
 GRP=$(($sectors*$GRP_SECTOR)) #Number of D2D groups in the whole topology
 
 STARTRUN=1 #Run number to start
