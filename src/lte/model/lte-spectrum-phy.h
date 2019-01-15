@@ -705,6 +705,7 @@ public:
   
   std::vector<std::vector<double>> GetRssiMap ();
   std::vector<std::vector<double>> GetRsrpMap ();
+  void MoveSensingWindow (uint32_t removeIdx);
 
   /**
   * TracedCallback signature for TB drop.

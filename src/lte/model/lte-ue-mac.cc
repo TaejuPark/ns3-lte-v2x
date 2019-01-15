@@ -1485,7 +1485,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                   }
                 else  // BSR received = there is data to transfer
                   {
-                    if (m_v2v) // Mode3
+                    if (m_v2v) // Mode4
                       {
                         NS_LOG_INFO ("SL BSR size =" << m_slBsrReceived.size ());
                         SidelinkGrantV2V grantV2V;
@@ -1518,24 +1518,36 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             // signal power (rsrp) check;
                             double rsrp_threshold = -110;
                             uint32_t candidate_count = 0;
-                            while (candidate_count < (uint32_t)(500.0 * 0.2))
+                            while (true)
                               { 
                                 candidate_count = 0;
                                 for (uint32_t idx_sc = 0; idx_sc < poolIt->second.m_pool->GetNSubChannel(); idx_sc++)
                                   {
                                     for (unsigned int idx_sf = 0; idx_sf < 100; idx_sf++)
                                       {
-                                        if (avrg_rsrp[idx_sc][idx_sf] / 10 < rsrp_threshold)
-                                          {
-                                            candidates[idx_sc][idx_sf] = false;
-                                          }
-                                        if (candidates[idx_sc][idx_sf])
+                                        if (avrg_rsrp[idx_sc][idx_sf] / 10 > rsrp_threshold)
                                           {
                                             candidate_count++;
                                           }
                                       }
                                   }
+
+                                if (candidate_count > (uint32_t)(300 * 0.2))
+                                  {
+                                    break;
+                                  }
                                 rsrp_threshold += 3;
+                              }
+
+                            for (uint32_t idx_sc = 0; idx_sc < poolIt->second.m_pool->GetNSubChannel(); idx_sc++)
+                              {
+                                for (unsigned int idx_sf = 0; idx_sf < 100; idx_sf++)
+                                  {
+                                    if (avrg_rsrp[idx_sc][idx_sf] / 10 < rsrp_threshold)
+                                      {
+                                        candidates[idx_sc][idx_sf] = false;
+                                      }
+                                  }
                               }
 
                             // serialize the candidate resources in one dimension vector for random choice.
@@ -1577,7 +1589,8 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             grantV2V.m_grantedSubframe = ultimateSubframe;
                             grantV2V.m_subChannelIndex = second_candidates_sc[randChosenResource];
                             //grantV2V.m_subChannelIndex = m_ueSelectedUniformVariable->GetInteger (0, poolIt->second.m_pool->GetNSubChannel()-1);
-
+                            
+                            m_uePhySapProvider->MoveSensingWindow(frameNo%1000);
                             NS_LOG_INFO("Succeed to get m_subChannelIndex for v2v transmit grant"); 
                             grantV2V.m_rbStart = poolIt->second.m_pool->GetSubChannelRbStartIndex(grantV2V.m_subChannelIndex);
 

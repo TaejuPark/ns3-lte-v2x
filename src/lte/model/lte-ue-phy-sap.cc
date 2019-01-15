@@ -48,5 +48,9 @@ LteUePhySapProvider::GetRsrpMap ()
   return temp;
 }
 
+void
+LteUePhySapProvider::MoveSensingWindow (uint32_t removeIdx)
+{
+}
 
 } // namespace ns3

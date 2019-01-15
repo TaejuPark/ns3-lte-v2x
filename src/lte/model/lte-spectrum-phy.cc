@@ -2377,6 +2377,20 @@ LteSpectrumPhy::GetRsrpMap ()
 }
 
 void
+LteSpectrumPhy::MoveSensingWindow(uint32_t removeIdx)
+{
+  NS_LOG_FUNCTION (this);
+  for (unsigned int index = removeIdx; index < removeIdx + 100; index++)
+  {
+    for (unsigned int subChannel = 0; subChannel < 3; subChannel++)
+      {
+        m_rssiMap[subChannel][index] = 0;
+        m_rsrpMap[subChannel][index] = 0;
+      }
+  }
+}
+
+void
 LteSpectrumPhy::UpdateRssiRsrpMap ()
 {
   NS_LOG_DEBUG (this);

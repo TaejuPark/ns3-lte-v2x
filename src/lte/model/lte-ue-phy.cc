@@ -84,6 +84,7 @@ public:
   UeMemberLteUePhySapProvider (LteUePhy* phy);
   virtual std::vector<std::vector<double>> GetRssiMap ();
   virtual std::vector<std::vector<double>> GetRsrpMap ();
+  virtual void MoveSensingWindow (uint32_t removeIdx);
 
   // inherited from LtePhySapProvider
   virtual void SendMacPdu (Ptr<Packet> p);
@@ -112,6 +113,12 @@ std::vector<std::vector<double>>
 UeMemberLteUePhySapProvider::GetRsrpMap ()
 {
   return m_phy->DoGetRsrpMap ();
+}
+
+void
+UeMemberLteUePhySapProvider::MoveSensingWindow (uint32_t removeIdx)
+{
+  m_phy->DoMoveSensingWindow (removeIdx);
 }
 
 void
@@ -594,6 +601,12 @@ LteUePhy::DoGetRsrpMap ()
 {
   NS_LOG_FUNCTION (this);
   return m_sidelinkSpectrumPhy->GetRsrpMap();
+}
+
+void
+LteUePhy::DoMoveSensingWindow (uint32_t removeIdx)
+{
+  m_sidelinkSpectrumPhy->MoveSensingWindow (removeIdx);
 }
 
 void
