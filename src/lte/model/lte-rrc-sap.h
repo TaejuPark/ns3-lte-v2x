@@ -627,6 +627,7 @@ public:
     /// Sidelink communication period enumeration
     enum
     {
+      sf16,
       sf40,
       sf48,
       sf60,
@@ -653,6 +654,9 @@ public:
     SlPeriodComm p;
     switch (periodLength)
       {
+      case 16:
+        p.period = SlPeriodComm::sf16;
+        break;
       case 40:
         p.period = SlPeriodComm::sf40;
         break;
@@ -707,6 +711,9 @@ public:
     uint32_t p = 0;
     switch (period.period)
       {
+      case SlPeriodComm::sf16:
+        p = 16;
+        break;
       case SlPeriodComm::sf40:
         p = 40;
         break;
