@@ -107,9 +107,9 @@ main (int argc, char *argv[])
   uint32_t respondersStart = 1;    // Responders' applications start time
   bool verbose = false;            // Print time progress
   bool onoff = false;              // Use on-off applications
-  double responderPktIntvl = 0.020; // Responders' application packet interval in seconds
-  uint32_t responderMaxPack = 10;  // Responders' maximum number of packets
-  uint32_t responderPktSize = 7;  // Number of payload bytes in packets
+  double responderPktIntvl = 0.1; // Responders' application packet interval in seconds
+  uint32_t responderMaxPack = 1;  // Responders' maximum number of packets
+  uint32_t responderPktSize = 800;  // Number of payload bytes in packets
   uint32_t numRings = 1;            // Number of rings in hexagon cell topology
   double isd = 10;                 // Inter Site Distance
   double minCenterDist = 1;        // Minimum deploy distance to center of cell site
@@ -154,19 +154,20 @@ main (int argc, char *argv[])
       LogLevel logLevel = (LogLevel)(LOG_PREFIX_FUNC | LOG_PREFIX_TIME | LOG_PREFIX_NODE | LOG_LEVEL_DEBUG);
       LogComponentEnable ("wns3-2017-pscch", logLevel);
 
-      LogComponentEnable ("PointToPointEpcHelper", logLevel);
-      LogComponentEnable ("EpcUeNas", logLevel);
+      //LogComponentEnable ("PointToPointEpcHelper", logLevel);
+      //LogComponentEnable ("EpcUeNas", logLevel);
       LogComponentEnable ("LteSpectrumPhy", logLevel);
-      LogComponentEnable ("LteUePhy", logLevel);
-      LogComponentEnable ("LteUeRrc", logLevel);
-      LogComponentEnable ("LteEnbRrc", logLevel);
-      LogComponentEnable ("LteEnbPhy", logLevel);
-      LogComponentEnable ("LteUeMac", logLevel);
-      LogComponentEnable ("LteSlUeRrc", logLevel);
-      LogComponentEnable ("LteSidelinkHelper", logLevel);
-      LogComponentEnable ("LteHelper", logLevel);
-      LogComponentEnable ("LteAmc", logLevel);
-      LogComponentEnable ("Ns2MobilityHelper", logLevel);
+      //LogComponentEnable ("LteUePhy", logLevel);
+      //LogComponentEnable ("LteUeRrc", logLevel);
+      //LogComponentEnable ("LteEnbRrc", logLevel);
+      //LogComponentEnable ("LteEnbPhy", logLevel);
+      //LogComponentEnable ("LteUeMac", logLevel);
+      //LogComponentEnable ("LteSlUeRrc", logLevel);
+      //LogComponentEnable ("LteSidelinkHelper", logLevel);
+      //LogComponentEnable ("LteHelper", logLevel);
+      //LogComponentEnable ("LteAmc", logLevel);
+      //LogComponentEnable ("Ns2MobilityHelper", logLevel);
+      //LogComponentEnable ("OutdoorToOutdoorPropagationLossModel", logLevel);
     }
 
 
@@ -230,7 +231,9 @@ main (int argc, char *argv[])
   topoHelper->AssignStreams (1);
 
   // Set pathloss model
-  lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::Cost231PropagationLossModel"));
+  //lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::Cost231PropagationLossModel"));
+  lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::OutdoorToOutdoorPropagationLossModel"));
+  //lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::Hybrid3gppPropagationLossModel"));
 
   // Create eNbs
   NodeContainer sectorNodes;

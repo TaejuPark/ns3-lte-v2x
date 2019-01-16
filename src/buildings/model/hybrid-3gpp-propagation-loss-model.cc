@@ -95,7 +95,7 @@ Hybrid3gppPropagationLossModel::GetTypeId (void)
                    MakeBooleanChecker ())
     .AddAttribute ("ShadowingEnabled",
                    "Activate or deactivate the shadowing computation",
-                   BooleanValue (false),
+                   BooleanValue (true),
                    MakeBooleanAccessor (&Hybrid3gppPropagationLossModel::EnableShadowing),
                    MakeBooleanChecker ())
     .AddTraceSource ("Hybrid3gppPathlossValue",

@@ -105,6 +105,7 @@ private:
   // inherited from PropagationLossModel
   virtual double DoCalcRxPower (double txPowerDbm, Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
+  double GetShadowing (double stddev, int type) const;
 
   double m_frequency;
   Ptr<UniformRandomVariable> m_rand;

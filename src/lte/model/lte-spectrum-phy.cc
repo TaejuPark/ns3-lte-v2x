@@ -812,7 +812,7 @@ LteSpectrumPhy::StartTxSlDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteContro
       txParams->ctrlMsgList = ctrlMsgList;
       m_ulDataSlCheck = true;
 
-      NS_LOG_DEBUG("StartTx on Spectrum Channel");
+      NS_LOG_INFO("StartTx on Spectrum Channel");
       m_channel->StartTx (txParams);
       m_endTxEvent = Simulator::Schedule (duration, &LteSpectrumPhy::EndTxData, this);
     }
@@ -1254,7 +1254,7 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
                           used_rb_cnt++;
                         }
                     }
-                  NS_LOG_DEBUG ("SL Message arriving on "<<used_rb_cnt<<" RBs");
+                  NS_LOG_INFO ("SL Message arriving on "<<used_rb_cnt<<" RBs");
                   packetInfo.rbBitmap = rbMap;
                   m_rxPacketInfo.push_back (packetInfo);
                   if (params->packetBurst)
@@ -1765,7 +1765,7 @@ LteSpectrumPhy::EndRxSlData ()
   // this will trigger CQI calculation and Error Model evaluation
   // as a side effect, the error model should update the error status of all TBs
   m_interferenceSl->EndRx ();
-  NS_LOG_DEBUG ("No. of SL burts " << m_rxPacketInfo.size ());
+  NS_LOG_INFO ("No. of SL bursts " << m_rxPacketInfo.size ());
   NS_LOG_INFO ("Expected TBs (communication) " << m_expectedSlTbs.size ());
   NS_LOG_INFO ("Expected TBs (discovery) " << m_expectedDiscTbs.size ());
   NS_LOG_INFO ("No Ctrl messages " << m_rxControlMessageList.size ());
@@ -2060,7 +2060,7 @@ LteSpectrumPhy::EndRxSlData ()
                   NS_LOG_INFO (this << " Average gain for SIMO = " << m_slRxGain << " Watts");
                   errorRate = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSinrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
                   corrupt = m_random->GetValue () > errorRate ? false : true;
-                  NS_LOG_INFO (this << " PSCCH Decoding, errorRate " << errorRate << " error " << corrupt);
+                  NS_LOG_DEBUG (this << " PSCCH Decoding, errorRate " << errorRate << " error " << corrupt);
                 }
               else if (m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::MIB_SL)
                 {
@@ -2167,7 +2167,7 @@ LteSpectrumPhy::EndRxSlData ()
         {
           if (!m_ltePhyRxCtrlEndOkCallback.IsNull ())
             {
-              NS_LOG_DEBUG ("Receive OK (No Error, No Collision)");
+              NS_LOG_INFO ("Receive OK (No Error, No Collision)");
               m_ltePhyRxCtrlEndOkCallback (rxControlMessageOkList);
             }
         }
@@ -2175,7 +2175,7 @@ LteSpectrumPhy::EndRxSlData ()
         {
           if (!m_ltePhyRxCtrlEndErrorCallback.IsNull ())
             {
-              NS_LOG_DEBUG (this << " PSCCH Error");
+              NS_LOG_INFO (this << " PSCCH Error");
               m_ltePhyRxCtrlEndErrorCallback ();
             }
         }
@@ -2183,7 +2183,7 @@ LteSpectrumPhy::EndRxSlData ()
   
   if (error)
     {
-      NS_LOG_DEBUG (this << " RX ERROR");
+      NS_LOG_INFO (this << " RX ERROR");
     }
   //Sidelink Discovery
   RxDiscovery();
@@ -2401,7 +2401,7 @@ LteSpectrumPhy::MoveSensingWindow(uint32_t removeIdx, uint32_t scPeriod)
 void
 LteSpectrumPhy::UpdateRssiRsrpMap ()
 {
-  NS_LOG_DEBUG (this);
+  NS_LOG_FUNCTION (this);
   uint16_t rbNum = 0;
   double rssiSum = 0.0;
   double rssi = 0.0;
@@ -2423,8 +2423,6 @@ LteSpectrumPhy::UpdateRssiRsrpMap ()
           rssiSum += (2 * (interfPlusNoisePowerTxW + signalPowerTxW));
         }
          
-      //TODO: How to get subChannel and subFrame information from signal.
-      // To get subChannel information, signal should have subchannel information.
       int subChannel = std::ceil(m_slRxRbStartIdx / 15);
       int64_t subFrame = Simulator::Now ().GetMilliSeconds () % 1000;
 

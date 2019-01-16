@@ -38,6 +38,7 @@
 #include "ns3/enum.h"
 #include "ns3/mobility-model.h"
 #include <cmath>
+#include <random>
 #include "outdoor-to-outdoor-propagation-loss-model.h"
 #include <ns3/node.h>
 
@@ -59,7 +60,7 @@ OutdoorToOutdoorPropagationLossModel::GetTypeId (void)
     .AddConstructor<OutdoorToOutdoorPropagationLossModel> ()
     .AddAttribute ("Frequency",
                    "The propagation frequency in Hz",
-                   DoubleValue (763e6),
+                   DoubleValue (2106e6),
                    MakeDoubleAccessor (&OutdoorToOutdoorPropagationLossModel::m_frequency),
                    MakeDoubleChecker<double> ())
   ;
@@ -107,9 +108,9 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
   // Propagation velocity in free space
   double c = 3 * std::pow (10, 8);
   // LOS offset = LOS loss to add to the computed pathloss
-  double los = 0;
+  double los = GetShadowing (3.0, 0);
   // NLOS offset = NLOS loss to add to the computed pathloss
-  double nlos = -5;
+  double nlos = GetShadowing (4.0, 0);
 
   double d1 = 4 * hbs1 * hms1 * m_frequency * (1 / c);
 
@@ -149,6 +150,7 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
         }
     }
 
+  //NS_LOG_DEBUG ("frequency carrier: " << fc);
   // This model is only valid to a minimum distance of 3 meters
   if (dist >= 3)
     {
@@ -186,6 +188,25 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
 
   loss = std::max (loss, pl_b1);
   return std::max (0.0, loss);
+}
+
+double
+OutdoorToOutdoorPropagationLossModel::GetShadowing(double stddev, int type) const
+{
+  std::default_random_engine generator;
+  double number;
+  if (type == 0) // LOS
+    {
+      std::lognormal_distribution <double> distribution (0.0, 3.0);
+      number = distribution (generator);
+    }
+  else
+    {
+      std::lognormal_distribution <double> distribution (0.0, 4.0);
+      number = distribution (generator);
+    }
+
+  return number;
 }
 
 double
