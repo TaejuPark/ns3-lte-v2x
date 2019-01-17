@@ -167,7 +167,7 @@ main (int argc, char *argv[])
       //LogComponentEnable ("LteHelper", logLevel);
       //LogComponentEnable ("LteAmc", logLevel);
       //LogComponentEnable ("Ns2MobilityHelper", logLevel);
-      //LogComponentEnable ("OutdoorToOutdoorPropagationLossModel", logLevel);
+      LogComponentEnable ("OutdoorToOutdoorPropagationLossModel", logLevel);
     }
 
 

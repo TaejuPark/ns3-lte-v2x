@@ -83,7 +83,7 @@ double
 OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
 {
   NS_LOG_FUNCTION (this);
-
+  srand(time(NULL));
   // Free space pathloss
   double loss = 0.0;
   // Frequency in GHz
@@ -100,8 +100,10 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
   // WINNER II channel model for Urban Microcell scenario (UMi) : B1
   double pl_b1 = 0.0;
   // Actual antenna heights (1.5 m for UEs)
-  double hms = a->GetPosition ().z;
-  double hbs = b->GetPosition ().z;
+  //double hms = a->GetPosition ().z;
+  //double hbs = b->GetPosition ().z;
+  double hms = 1.5;
+  double hbs = 1.5;
   // Effective antenna heights (0.8 m for UEs)
   double hbs1 = hbs - 1;
   double hms1 = hms - 0.7;
@@ -162,12 +164,12 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
           if (dist <= d1)
             {
               pl_b1 = 22.7 * std::log10 (dist) + 27.0 + 20.0 * std::log10 (fc) + los + los_shadow;
-              NS_LOG_INFO (this << "Outdoor LOS (Distance <= " << d1 << ") : the WINNER B1 loss = " << pl_b1);
+              NS_LOG_INFO ("Outdoor LOS (Distance = " << dist << "), shadow = " << los_shadow <<", WINNER B1 loss = " << pl_b1);
             }
           else
             {
               pl_b1 = 40 * std::log10 (dist) + 7.56 - 17.3 * std::log10 (hbs1) - 17.3 * std::log10 (hms1) + 2.7 * std::log10 (fc) + los + los_shadow;
-              NS_LOG_INFO (this << "Outdoor LOS (Distance > " << d1 << ") : the WINNER B1 loss = " << pl_b1);
+              NS_LOG_INFO ("Outdoor LOS (Distance = " << dist << "), shadow = " << los_shadow <<", WINNER B1 loss = " << pl_b1);
             }
         }
       else
@@ -177,13 +179,13 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
             {
               // Frequency = 700 MHz for Public Safety
               pl_b1 = (44.9 - 6.55 * std::log10 (hbs)) * std::log10 (dist) + 5.83 * std::log10 (hbs) + 16.33 + 26.16 * std::log10 (fc) + nlos + nlos_shadow;
-              NS_LOG_INFO (this << "Outdoor NLOS (Frequency 0.7 GHz) , the WINNER B1 loss = " << pl_b1);
+              NS_LOG_INFO ("Outdoor NLOS (Distance = " << dist << "), shadow = " << nlos_shadow <<", WINNER B1 loss = " << pl_b1);
             }
           if ((fc >= 1.92)and (fc <= 2.17))
             {
               // Frequency = 2 GHz for general scenarios
               pl_b1 = (44.9 - 6.55 * std::log10 (hbs)) * std::log10 (dist) + 5.83 * std::log10 (hbs) + 14.78 + 34.97 * std::log10 (fc) + nlos + nlos_shadow;
-              NS_LOG_INFO (this << "Outdoor NLOS (Frequency 2 GHz) , the WINNER B1 loss = " << pl_b1);
+              NS_LOG_INFO ("Outdoor NLOS (Distance = " << dist << "), shadow = " << nlos_shadow <<", WINNER B1 loss = " << pl_b1);
             }
         }
     }
