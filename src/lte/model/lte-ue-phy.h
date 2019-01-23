@@ -580,7 +580,8 @@ private:
   // UE PHY SAP methods 
   virtual std::vector<std::vector<double>> DoGetRssiMap ();
   virtual std::vector<std::vector<double>> DoGetRsrpMap ();
-  void DoMoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod);
+  virtual void DoMoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod);
+  virtual std::vector<uint32_t> DoGetFeedbackProvidedResources (uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU);
   virtual void DoSendMacPdu (Ptr<Packet> p);
   /**
    * Send LTE control message function

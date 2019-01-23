@@ -53,4 +53,11 @@ LteUePhySapProvider::MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod)
 {
 }
 
+std::vector<uint32_t>
+LteUePhySapProvider::GetFeedbackProvidedResources (uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU)
+{
+  std::vector<uint32_t> temp;
+  return temp;
+}
+
 } // namespace ns3

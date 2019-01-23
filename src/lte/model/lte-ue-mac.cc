@@ -474,6 +474,12 @@ LteUeMac::SetUEID (uint32_t ueid)
   m_ueid = ueid;
 }
 
+std::vector<uint32_t>
+LteUeMac::GenerateFeedbacksForSelectedResources(std::vector<uint32_t> feedback_RUs)
+{
+  
+}
+
 void
 LteUeMac::DoTransmitPdu (LteMacSapProvider::TransmitPduParameters params)
 {
@@ -1865,37 +1871,38 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
               if (m_v2v)
                 {
                   // create SCI format 1 message
-                  SciF1ListElement_s sci;
-                  sci.m_priority = 0; // no priority
-                  sci.m_resReserve = 1; // (1 = 100ms)
-                  sci.m_frl = poolIt->second.m_currentGrantV2V.m_subChannelIndex; // frl = frequency resource location
-                  sci.m_timeGap = 0; // no retransmission
-                  sci.m_reIndex = 0;
-                  sci.m_mcs = poolIt->second.m_currentGrantV2V.m_mcs;
-                  sci.m_rbStart = poolIt->second.m_currentGrantV2V.m_rbStart;
-                  sci.m_rbLen = poolIt->second.m_currentGrantV2V.m_rbLen;
-                  sci.m_tbSize = poolIt->second.m_currentGrantV2V.m_tbSize;
-                  sci.m_frameNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.frameNo;
-                  sci.m_subframeNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.subframeNo;
-                  sci.m_rnti = m_ueid;
-                  sci.m_groupDstId = (poolIt->first & 0xFF);
-                  msg->SetSciF1 (sci);
+                  SciF1ListElement_s scif1;
+                  scif1.m_priority = 0; // no priority
+                  scif1.m_resReserve = 1; // (1 = 100ms)
+                  scif1.m_frl = poolIt->second.m_currentGrantV2V.m_subChannelIndex; // frl = frequency resource location
+                  scif1.m_timeGap = 0; // no retransmission
+                  scif1.m_reIndex = 0;
+                  scif1.m_mcs = poolIt->second.m_currentGrantV2V.m_mcs;
+                  scif1.m_rbStart = poolIt->second.m_currentGrantV2V.m_rbStart;
+                  scif1.m_rbLen = poolIt->second.m_currentGrantV2V.m_rbLen;
+                  scif1.m_tbSize = poolIt->second.m_currentGrantV2V.m_tbSize;
+                  scif1.m_frameNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.frameNo;
+                  scif1.m_subframeNo = poolIt->second.m_currentGrantV2V.m_grantedSubframe.subframeNo;
+                  scif1.m_rnti = m_ueid;
+                  scif1.m_groupDstId = (poolIt->first & 0xFF);
+                  scif1.m_feedback = m_uePhySapProvider->GetFeedbackProvidedResources(scif1.m_frl, scif1.m_frameNo*10 + scif1.m_subframeNo, 10, 144);
+                  msg->SetSciF1 (scif1);
                 }
               else
                 {
                   //create SCI format 0 message
-                  SciF0ListElement_s sci;
-                  sci.m_rnti = m_ueid;
-                  sci.m_mcs = poolIt->second.m_currentGrant.m_mcs;
-                  sci.m_tbSize = poolIt->second.m_currentGrant.m_tbSize;
-                  sci.m_resPscch = poolIt->second.m_currentGrant.m_resPscch;
-                  sci.m_rbLen = poolIt->second.m_currentGrant.m_rbLen;
-                  sci.m_rbStart = poolIt->second.m_currentGrant.m_rbStart;
-                  sci.m_trp = poolIt->second.m_currentGrant.m_iTrp;
-                  sci.m_hopping = poolIt->second.m_currentGrant.m_hopping;
-                  sci.m_hoppingInfo = poolIt->second.m_currentGrant.m_hoppingInfo;
-                  sci.m_groupDstId = (poolIt->first & 0xFF);
-                  msg->SetSciF0 (sci);
+                  SciF0ListElement_s scif0;
+                  scif0.m_rnti = m_ueid;
+                  scif0.m_mcs = poolIt->second.m_currentGrant.m_mcs;
+                  scif0.m_tbSize = poolIt->second.m_currentGrant.m_tbSize;
+                  scif0.m_resPscch = poolIt->second.m_currentGrant.m_resPscch;
+                  scif0.m_rbLen = poolIt->second.m_currentGrant.m_rbLen;
+                  scif0.m_rbStart = poolIt->second.m_currentGrant.m_rbStart;
+                  scif0.m_trp = poolIt->second.m_currentGrant.m_iTrp;
+                  scif0.m_hopping = poolIt->second.m_currentGrant.m_hopping;
+                  scif0.m_hoppingInfo = poolIt->second.m_currentGrant.m_hoppingInfo;
+                  scif0.m_groupDstId = (poolIt->first & 0xFF);
+                  msg->SetSciF0 (scif0);
                 }
 
               NS_LOG_INFO ("SCI message is queued at m_controlMessage");

@@ -85,6 +85,7 @@ public:
   virtual std::vector<std::vector<double>> GetRssiMap ();
   virtual std::vector<std::vector<double>> GetRsrpMap ();
   virtual void MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod);
+  virtual std::vector<uint32_t> GetFeedbackProvidedResources (uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU);
 
   // inherited from LtePhySapProvider
   virtual void SendMacPdu (Ptr<Packet> p);
@@ -113,6 +114,12 @@ std::vector<std::vector<double>>
 UeMemberLteUePhySapProvider::GetRsrpMap ()
 {
   return m_phy->DoGetRsrpMap ();
+}
+
+std::vector<uint32_t>
+UeMemberLteUePhySapProvider::GetFeedbackProvidedResources (uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU)
+{
+  return m_phy->DoGetFeedbackProvidedResources (subChannel, subFrame, nFeedback, totalRU);
 }
 
 void
@@ -601,6 +608,13 @@ LteUePhy::DoGetRsrpMap ()
 {
   NS_LOG_FUNCTION (this);
   return m_sidelinkSpectrumPhy->GetRsrpMap();
+}
+
+std::vector<uint32_t>
+LteUePhy::DoGetFeedbackProvidedResources (uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU)
+{
+  NS_LOG_FUNCTION (this);
+  return m_sidelinkSpectrumPhy->GetFeedbackProvidedResources (subChannel, subFrame, nFeedback, totalRU);
 }
 
 void
@@ -1699,6 +1713,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                   NS_LOG_DEBUG (" UE - start TX both PSCCH and PSSCH");
                   std::vector <int> slRb;
                   SciF1ListElement_s scif1;
+                  uint8_t sci_groupDstId = 0;
                   
                   if ((*msgIt)->GetMessageType () == LteControlMessage::SCI)
                     {
@@ -1706,6 +1721,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                       scif1 = msg2->GetSciF1 ();
                       std::map<uint16_t, SidelinkGrantInfo>::iterator grantIt;
                       grantIt = m_slTxPoolInfo.m_currentGrants.find (scif1.m_rnti);
+                      sci_groupDstId = scif1.m_groupDstId;
                       
                       if (grantIt == m_slTxPoolInfo.m_currentGrants.end ())
                         {
@@ -1803,7 +1819,7 @@ LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                       else
                         {
                           SetSubChannelsForTransmission (rbMask);
-                          m_sidelinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, scif1.m_groupDstId);
+                          m_sidelinkSpectrumPhy->StartTxSlDataFrame (pb, ctrlMsg, UL_DATA_DURATION, sci_groupDstId);
                         }
                     }
                 }

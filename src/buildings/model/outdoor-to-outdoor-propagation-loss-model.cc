@@ -156,6 +156,7 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
 
   //NS_LOG_DEBUG ("frequency carrier: " << fc);
   // This model is only valid to a minimum distance of 3 meters
+  plos = r - 1.0;
   if (dist >= 3)
     {
       if (r <= plos)
@@ -197,7 +198,8 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
 double
 OutdoorToOutdoorPropagationLossModel::GetShadowing(double stddev, int type) const
 {
-  std::default_random_engine generator;
+  std::random_device dev;
+  std::mt19937 generator(dev());
   double number;
   if (type == 0) // LOS
     {

@@ -277,7 +277,8 @@ struct SlPhyReceptionStatParameters
   uint16_t m_size;         ///< Size of transport block
   uint8_t  m_correctness;  ///< correctness of the TB received
   uint8_t  m_iTrp; ///< Time recourse pattern (TRP) index
-  uint8_t   m_groupDstId; ///< Group destination ID
+  uint8_t  m_groupDstId; ///< Group destination ID
+  uint32_t m_conflict;
 
   // for V2X
   uint8_t m_priority;

@@ -706,6 +706,7 @@ public:
   std::vector<std::vector<double>> GetRssiMap ();
   std::vector<std::vector<double>> GetRsrpMap ();
   void MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod);
+  std::vector<uint32_t> GetFeedbackProvidedResources(uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU);
 
   /**
   * TracedCallback signature for TB drop.
@@ -825,8 +826,10 @@ private:
   Ptr<LteInterference> m_interferenceData; ///< the data interference
   Ptr<LteInterference> m_interferenceCtrl; ///< the control interference
 
-  std::vector<std::vector<double>> m_rssiMap; // rssi map for 5 sub-channel, 100 subframe in a SC period.
-  std::vector<std::vector<double>> m_rsrpMap; // rsrp map for 5 sub-channel, 100 subframe in a SC period.
+  std::vector<std::vector<double>> m_rssiMap; // rssi map
+  std::vector<std::vector<double>> m_rsrpMap; // rsrp map
+  std::vector<std::vector<uint32_t> m_txFeedbackMap; // map for feedback information to transmit.
+  std::vector<std::vector<uint32_t> m_rxFeedbackMap; // map for received feedback information
 
   uint16_t m_cellId; ///< the cell ID
   

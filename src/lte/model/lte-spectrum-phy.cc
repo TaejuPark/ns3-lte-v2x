@@ -525,6 +525,17 @@ LteSpectrumPhy::InitRssiRsrpMap ()
           m_rsrpMap[subChannel].push_back(0.0);
         }
     }
+  
+  NS_ASSERT (m_feedbackMap.size()==0);
+  for (uint32_t subChannel = 0; subChannel < nSubChannel; subChannel++)
+    {
+      std::vector<uint32_t> temp;
+      m_feedbackMap.push_back(temp);
+      for (int subFrame = 0; subFrame < 1000; subFrame++)
+        {
+          m_feedbackMap[subChannel].push_back(0);
+        }
+    }
 }
 
 Ptr<SpectrumChannel> 
@@ -2028,7 +2039,7 @@ LteSpectrumPhy::EndRxSlData ()
 
       bool corrupt = false;
       ctrlMessageFound = true;
-
+      uint32_t conflict = false;
       if (m_slCtrlErrorModelEnabled)
         {
           for (std::vector<int>::iterator rbIt =  m_rxPacketInfo[i].rbBitmap.begin ();  rbIt != m_rxPacketInfo[i].rbBitmap.end (); rbIt++)
@@ -2045,8 +2056,9 @@ LteSpectrumPhy::EndRxSlData ()
                 }
               if (rbDecodedBitmap.find (*rbIt) != rbDecodedBitmap.end ())
                 {
-                  NS_LOG_DEBUG (*rbIt << " TB with the similar RB has already been decoded. Avoid to decode it again!");
+                  NS_LOG_INFO (*rbIt << " TB with the similar RB has already been decoded. Avoid to decode it again!");
                   corrupt = true;
+                  conflict = true;
                   break;
                 }
              }
@@ -2060,14 +2072,14 @@ LteSpectrumPhy::EndRxSlData ()
                   NS_LOG_INFO (this << " Average gain for SIMO = " << m_slRxGain << " Watts");
                   errorRate = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSinrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
                   corrupt = m_random->GetValue () > errorRate ? false : true;
-                  NS_LOG_DEBUG (this << " PSCCH Decoding, errorRate " << errorRate << " error " << corrupt);
+                  NS_LOG_INFO (this << " PSCCH Decoding, errorRate " << errorRate << " error " << corrupt);
                 }
               else if (m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::MIB_SL)
                 {
                   //Average gain for SIMO based on [CatreuxMIMO] --> m_slSinrPerceived[i] * 2.51189
                   errorRate = LteNistErrorModel::GetPsbchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSinrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
                   corrupt = m_random->GetValue () > errorRate ? false : true;
-                  NS_LOG_DEBUG (this << " PSBCH Decoding, errorRate " << errorRate << " error " << corrupt);
+                  NS_LOG_INFO (this << " PSBCH Decoding, errorRate " << errorRate << " error " << corrupt);
                 }
               else
                 {
@@ -2111,6 +2123,12 @@ LteSpectrumPhy::EndRxSlData ()
           SciF0ListElement_s scif0 = msg2->GetSciF0 ();
           SciF1ListElement_s scif1 = msg2->GetSciF1 ();
 
+          if (!error)
+            {
+              // TODO: Update feedback information.
+
+            }
+
           SlPhyReceptionStatParameters params;
           params.m_timestamp = Simulator::Now ().GetMilliSeconds ();
           params.m_cellId = m_cellId;
@@ -2125,6 +2143,7 @@ LteSpectrumPhy::EndRxSlData ()
           params.m_iTrp = scif0.m_trp;
           params.m_hopping = scif0.m_hopping;
           params.m_correctness = (uint8_t) !corrupt;
+          params.m_conflict = conflict;
 
           params.m_priority = scif1.m_priority;
           params.m_rnti = scif1.m_rnti;
@@ -2145,7 +2164,7 @@ LteSpectrumPhy::EndRxSlData ()
           double deltaY = params.m_rxPosY - params.m_txPosY;
           double distRxTx = std::sqrt(deltaX * deltaX + deltaY * deltaY);
           params.m_neighbor = 0;
-          if (distRxTx < 200.0)
+          if (distRxTx < 300.0)
             {
               params.m_neighbor = 1;
               m_slPscchReception (params);
@@ -2368,6 +2387,20 @@ LteSpectrumPhy::SetTxModeGain (uint8_t txMode, double gain)
       m_txModeGain.push_back (temp.at (i));
     }
   }
+}
+
+std::vector<uint32_t>
+LteSpectrumPhy::GetFeedbackProvidedResources(uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU)
+{
+  NS_LOG_FUNCTION (this);
+  std::vector<uint32_t> feedback_RUs;
+  for (uint32_t i = 0; i < nFeedback; i++)
+    {
+      uint32_t feedback_ru = ((subChannel * subFrame) + i) % totalRU;
+      feedback_RUs.push_back(feedback_ru);
+    }
+
+  return feedback_RUs;
 }
 
 std::vector<std::vector<double>>
