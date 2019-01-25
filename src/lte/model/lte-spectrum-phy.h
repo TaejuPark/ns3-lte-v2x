@@ -828,8 +828,9 @@ private:
 
   std::vector<std::vector<double>> m_rssiMap; // rssi map
   std::vector<std::vector<double>> m_rsrpMap; // rsrp map
-  std::vector<std::vector<uint32_t> m_txFeedbackMap; // map for feedback information to transmit.
-  std::vector<std::vector<uint32_t> m_rxFeedbackMap; // map for received feedback information
+  std::vector<std::vector<uint32_t>> m_txFeedbackMap; // map for feedback information to transmit.
+  std::vector<std::vector<uint32_t>> m_rxFeedbackMap; // map for received feedback information
+  std::vector<uint32_t> m_msgLastReception;
 
   uint16_t m_cellId; ///< the cell ID
   

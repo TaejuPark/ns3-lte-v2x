@@ -852,6 +852,7 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n, NodeContainer c, uint32_t nodeId
     //TODO: Ptr<LteUePhy> phy = CreateObject<LteUePhy> (dlPhy, ulPhy);
     Ptr<LteUePhy> phy = CreateObject<LteUePhy> (slPhy, slPhy);
     phy->SetSlSpectrumPhy(slPhy);
+    slPhy->SetAttribute("CtrlFullDuplexEnabled", BooleanValue (true));
     slPhy->SetAttribute("HalfDuplexPhy", PointerValue(slPhy)); // pointer to sl spectrumphy
     slPhy->SetRbPerSubChannel (15);
           

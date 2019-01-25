@@ -289,6 +289,7 @@ struct SlPhyReceptionStatParameters
   uint32_t m_tbSize;
   uint32_t m_frameNo;
   uint32_t m_subframeNo;
+  uint32_t m_msgInterval;
 
   // Position
   int32_t m_rxPosX;

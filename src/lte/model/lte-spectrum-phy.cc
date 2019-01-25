@@ -275,6 +275,10 @@ LteSpectrumPhy::LteSpectrumPhy ()
     }
   
   m_slRxRbStartIdx = 0;
+  for (uint32_t i = 0; i < 300; i++)
+    {
+      m_msgLastReception.push_back(0);
+    }
 }
 
 
@@ -526,7 +530,7 @@ LteSpectrumPhy::InitRssiRsrpMap ()
         }
     }
   
-  NS_ASSERT (m_feedbackMap.size()==0);
+  /*NS_ASSERT (m_feedbackMap.size()==0);
   for (uint32_t subChannel = 0; subChannel < nSubChannel; subChannel++)
     {
       std::vector<uint32_t> temp;
@@ -535,7 +539,7 @@ LteSpectrumPhy::InitRssiRsrpMap ()
         {
           m_feedbackMap[subChannel].push_back(0);
         }
-    }
+    }*/
 }
 
 Ptr<SpectrumChannel> 
@@ -783,7 +787,7 @@ LteSpectrumPhy::StartTxSlDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteContro
 
   switch (m_state)
   {
-    case RX_DATA:
+    //case RX_DATA:
     case RX_DL_CTRL:
     case RX_UL_SRS:
       NS_FATAL_ERROR ("cannot TX while RX: according to FDD channel access, the physical layer for transmission cannot be used for reception");
@@ -794,7 +798,12 @@ LteSpectrumPhy::StartTxSlDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteContro
     case TX_UL_SRS:
       NS_FATAL_ERROR ("cannot TX while already TX: the MAC should avoid this");
       break;
-
+    case RX_DATA:
+      if (!m_ctrlFullDuplexEnabled)
+        {
+          NS_FATAL_ERROR ("cannot TX while RX: according to FDD channel access, the physical layer for transmission cannot be used for reception");
+          break;
+        }
     case IDLE:
     {
       /*
@@ -1034,7 +1043,7 @@ LteSpectrumPhy::StartRx (Ptr<SpectrumSignalParameters> spectrumRxParams)
               NS_LOG_INFO (this<<" Received Sidelink Data "<<m_halfDuplexPhy);
               StartRxSlData (lteSlRxParams);
             }
-          }
+        }
     }
   else
     {
@@ -1129,7 +1138,7 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
 
   switch (m_state)
     {
-      case TX_DATA:
+      //case TX_DATA:
       case TX_DL_CTRL:
       case TX_UL_SRS:
       NS_FATAL_ERROR ("cannot RX while TX: according to FDD channel access, the physical layer for transmission cannot be used for reception");
@@ -1137,6 +1146,11 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
       case RX_DL_CTRL:
       NS_FATAL_ERROR ("cannot RX Data while receiving control");
       break;
+      case TX_DATA:
+        if (!m_ctrlFullDuplexEnabled)
+          {
+            break;
+          }
       case IDLE:
       case RX_DATA:
         // the behavior is similar when
@@ -2033,6 +2047,8 @@ LteSpectrumPhy::EndRxSlData ()
         }
     }
 
+  //uint32_t txFeedbackValue = 0;
+
   for (std::multiset<SlCtrlPacketInfo_t>::iterator it = sortedControlMessages.begin (); it != sortedControlMessages.end (); it++ )
     {
       int i = (*it).index;
@@ -2065,13 +2081,32 @@ LteSpectrumPhy::EndRxSlData ()
 
           if (!corrupt)
             {
-              double  errorRate;
+              double errorRate;
+              //double lowEnergyTest;
+              //bool isCase1 = false;
               if ( m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::SCI)
                 {
                   //Average gain for SIMO based on [CatreuxMIMO] --> m_slSinrPerceived[i] * 2.51189
                   NS_LOG_INFO (this << " Average gain for SIMO = " << m_slRxGain << " Watts");
+                  /*lowEnergyTest = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSignalPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
+                  corrupt = m_random->GetValue () > lowEnergyTest ? false : true;
+                  if (corrupt)
+                    {
+                      isCase1 = true;
+                      txFeedbackValue = 0;
+                    }*/
+
                   errorRate = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSinrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
                   corrupt = m_random->GetValue () > errorRate ? false : true;
+                 /* if (!corrupt)
+                    {
+                    // TODO: how to differentiate two subcases of Case 2
+                    }
+                  else
+                    {
+                      txFeedbackValue = 3;
+                    }*/
+
                   NS_LOG_INFO (this << " PSCCH Decoding, errorRate " << errorRate << " error " << corrupt);
                 }
               else if (m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::MIB_SL)
@@ -2167,10 +2202,21 @@ LteSpectrumPhy::EndRxSlData ()
           if (distRxTx < 300.0)
             {
               params.m_neighbor = 1;
+              if (m_msgLastReception[params.m_rnti-1] == 0)
+                {
+                  params.m_msgInterval = 0;
+                  m_msgLastReception[params.m_rnti-1] = params.m_timestamp;
+                }
+              else
+                {
+                  params.m_msgInterval = params.m_timestamp - m_msgLastReception[params.m_rnti-1];
+                  m_msgLastReception[params.m_rnti-1] = params.m_timestamp;
+                }
               m_slPscchReception (params);
             }
           else
             {
+              m_msgLastReception[params.m_rnti-1] = 0;
               params.m_neighbor = 0;
             }
                   
@@ -2466,6 +2512,16 @@ LteSpectrumPhy::UpdateRssiRsrpMap ()
       m_rsrpMap[subChannel][subFrame] = rsrp_dBm;
     }
 }
+
+/*void
+LteSpectrumPhy::UpdateTxFeedbackMap (uint32_t value)
+{
+  NS_LOG_FUNCTION (this);
+  int subChannel = std::ceil(m_slRxRbStartIdx / 15);
+  int64_t subFrame = Simulator::Now ().GetMilliSeconds () % 48;
+  
+  m_txFeedbackMap[subChannel][subFrame] = value;
+}*/
 
 double
 LteSpectrumPhy::GetMeanSinr (const SpectrumValue& sinr, const std::vector<int>& map)

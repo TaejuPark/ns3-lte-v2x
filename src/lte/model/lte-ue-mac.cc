@@ -474,11 +474,12 @@ LteUeMac::SetUEID (uint32_t ueid)
   m_ueid = ueid;
 }
 
-std::vector<uint32_t>
+/*std::vector<uint32_t>
 LteUeMac::GenerateFeedbacksForSelectedResources(std::vector<uint32_t> feedback_RUs)
 {
-  
-}
+  std::vector<uint32_t> temp;
+  return temp;  
+}*/
 
 void
 LteUeMac::DoTransmitPdu (LteMacSapProvider::TransmitPduParameters params)
