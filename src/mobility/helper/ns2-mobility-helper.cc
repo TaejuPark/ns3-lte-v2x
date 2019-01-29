@@ -277,7 +277,8 @@ Ns2MobilityHelper::ConfigNodesMovements (const ObjectStore &store) const
             {
               DestinationPoint point;
               //                                                    coord         coord value
-              point.m_finalPosition = SetInitialPosition (model, pr.tokens[2], pr.dvals[3]);
+              //point.m_finalPosition = SetInitialPosition (model, pr.tokens[2], pr.dvals[3]);
+              point.m_finalPosition = SetInitialPosition (model, pr.tokens[2], 999999.0);
               last_pos[iNodeId] = point;
 
               // Log new position
@@ -295,6 +296,7 @@ Ns2MobilityHelper::ConfigNodesMovements (const ObjectStore &store) const
   // The reason the file is parsed again is to make this helper robust
   // to handle trace files with the initial node positions at the end.
   file.open (m_filename.c_str (), std::ios::in);
+  bool flag = false;
   if (file.is_open ())
     {
       while (!file.eof () )
@@ -349,6 +351,7 @@ Ns2MobilityHelper::ConfigNodesMovements (const ObjectStore &store) const
               // This is the second time this file has been parsed,
               // and the initial node positions were already set the
               // first time.  So, do nothing this time with this line.
+              flag = true;
               continue;
             }
 
@@ -393,8 +396,21 @@ Ns2MobilityHelper::ConfigNodesMovements (const ObjectStore &store) const
                       last_pos[iNodeId].m_stopEvent.Cancel ();
                       last_pos[iNodeId].m_finalPosition = reached;
                     }
-                  //                                     last position     time  X coord     Y coord      velocity
-                  last_pos[iNodeId] = SetMovement (model, last_pos[iNodeId].m_finalPosition, at, pr.dvals[5], pr.dvals[6], pr.dvals[7]);
+
+                  if (!flag)
+                    {
+                      //                                     last position     time  X coord     Y coord      velocity
+                      last_pos[iNodeId] = SetMovement (model, last_pos[iNodeId].m_finalPosition, at, pr.dvals[5], pr.dvals[6], pr.dvals[7]);
+                    }
+                  else
+                    {
+                      flag = false;
+                      Vector position;
+                      position.x = pr.dvals[5];
+                      position.y = pr.dvals[6];
+                      position.z = 0.0;
+                      Simulator::Schedule (Seconds (at), &ConstantVelocityMobilityModel::SetPosition, model,position);
+                    }
 
                   // Log new position
                   NS_LOG_DEBUG ("Positions after parse for node " << iNodeId << " " << nodeId << " position =" << last_pos[iNodeId].m_finalPosition);

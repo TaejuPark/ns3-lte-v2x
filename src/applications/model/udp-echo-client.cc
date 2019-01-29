@@ -349,6 +349,8 @@ UdpEchoClient::Send (void)
   m_socket->Send (p);
   ++m_sent;
 
+  NS_LOG_DEBUG ("broadcast " << m_size << "bytes message");
+
   if (Ipv4Address::IsMatchingType (m_peerAddress))
     {
       NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s client sent " << m_size << " bytes to " <<

@@ -48,8 +48,20 @@ LteUePhySapProvider::GetRsrpMap ()
   return temp;
 }
 
+std::vector<std::vector<bool>>
+LteUePhySapProvider::GetDecodingMap ()
+{
+  std::vector<std::vector<bool>> temp;
+  return temp;
+}
+
 void
 LteUePhySapProvider::MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod)
+{
+}
+
+void
+LteUePhySapProvider::SetNextTxTime (uint32_t txTime)
 {
 }
 

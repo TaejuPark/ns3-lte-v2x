@@ -476,6 +476,7 @@ private:
     SidelinkGrantV2V m_prevGrantV2V;
 
     uint32_t m_reserveCount;
+    uint32_t m_chosenSubframe;
 
     std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> m_pscchTx; ///< List of PSCCH transmissions within the pool
     std::list<SidelinkCommResourcePool::SidelinkTransmissionInfo> m_psschTx; ///< List of PSSCH transmissions within the pool

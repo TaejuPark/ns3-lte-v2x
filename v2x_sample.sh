@@ -37,13 +37,13 @@
 OVERWRITE=0
 
 SCENARIO="v2x_sample"
-SIMULATION_TIME=5 #Change to 81 seconds to simulate 1000 sidelink periods of 80 ms
+SIMULATION_TIME=100 #Change to 81 seconds to simulate 1000 sidelink periods of 80 ms
 PSCCH_RB_M=22 
 MCS=10
 PSSCH_SUBCHANNEL_RBS=2
 KTRP=2
 PERIOD_LENGTH=48
-PACKET_PAYLOAD_SIZE=800 # responderPktSize
+PACKET_PAYLOAD_SIZE=10 # responderPktSize
 MIN_UES_PER_SECTOR=3 #3 used for evaluations
 MAX_UES_PER_SECTOR=3 #33 used for evaluations
 PSCCH_SF_BITMAPS="0xFFFFFFFFFF" #Bitmap must be 40 bits

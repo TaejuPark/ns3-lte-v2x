@@ -705,7 +705,9 @@ public:
   
   std::vector<std::vector<double>> GetRssiMap ();
   std::vector<std::vector<double>> GetRsrpMap ();
+  std::vector<std::vector<bool>> GetDecodingMap ();
   void MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod);
+  void SetNextTxTime (uint32_t txTime);
   std::vector<uint32_t> GetFeedbackProvidedResources(uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU);
 
   /**
@@ -806,6 +808,7 @@ private:
   
   
   State m_state; ///< the state
+  bool isTx;
   Time m_firstRxStart; ///< the first receive start
   Time m_firstRxDuration; ///< the first receive duration
   uint32_t m_slRxRbStartIdx;
@@ -826,11 +829,14 @@ private:
   Ptr<LteInterference> m_interferenceData; ///< the data interference
   Ptr<LteInterference> m_interferenceCtrl; ///< the control interference
 
+  std::vector<std::vector<bool>> m_decodingMap;
   std::vector<std::vector<double>> m_rssiMap; // rssi map
   std::vector<std::vector<double>> m_rsrpMap; // rsrp map
   std::vector<std::vector<uint32_t>> m_txFeedbackMap; // map for feedback information to transmit.
   std::vector<std::vector<uint32_t>> m_rxFeedbackMap; // map for received feedback information
   std::vector<uint32_t> m_msgLastReception;
+  uint32_t m_nextTxTime;
+  bool m_isDecoded;
 
   uint16_t m_cellId; ///< the cell ID
   

@@ -290,6 +290,8 @@ struct SlPhyReceptionStatParameters
   uint32_t m_frameNo;
   uint32_t m_subframeNo;
   uint32_t m_msgInterval;
+  uint8_t m_isTx;
+  uint32_t m_nextTxTime;
 
   // Position
   int32_t m_rxPosX;

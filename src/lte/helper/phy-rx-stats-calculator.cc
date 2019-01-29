@@ -277,7 +277,7 @@ PhyRxStatsCalculator::SlPscchReception (SlPhyReceptionStatParameters params)
         }
       m_slPscchRxFirstWrite = false;
       //outFile << "% time\tcellId\tIMSI\tRNTI\tmcs\tsize\tresPscch\trbLen\trbStart\tiTrp\thopping\tgroupDstId\tcorrect";
-      outFile << "time\tTXID\tRXID\tTxPosX\tTxPosY\tRxPosX\tRxPosY\tCorrect\tConflict\tNeighbour\tInterval";
+      outFile << "time\tnextTx\tTXID\tRXID\tTxPosX\tTxPosY\tRxPosX\tRxPosY\tCorrect\tCflict\tNeiBor\tItervl\tisTx";
       //outFile << "time\tTXID\tRXID\tRxPosX\tRxPosY\tCorrect\tNeighbour";
       outFile << std::endl;
     }
@@ -307,16 +307,18 @@ PhyRxStatsCalculator::SlPscchReception (SlPhyReceptionStatParameters params)
   outFile << (uint32_t) params.m_correctness <<std::endl;*/
 
   outFile << params.m_timestamp << "\t";
+  //outFile << params.m_nextTxTime << "\t";
   outFile << params.m_rnti << "\t";
   outFile << params.m_imsi << "\t";
-  outFile << params.m_txPosX << "\t";
-  outFile << params.m_txPosY << "\t";
-  outFile << params.m_rxPosX << "\t";
-  outFile << params.m_rxPosY << "\t";
+  //outFile << params.m_txPosX << "\t";
+  //outFile << params.m_txPosY << "\t";
+  //outFile << params.m_rxPosX << "\t";
+  //outFile << params.m_rxPosY << "\t";
   outFile << (uint32_t) params.m_correctness << "\t";
   outFile << params.m_conflict << "\t";
   outFile << params.m_neighbor << "\t";
-  outFile << params.m_msgInterval << std::endl;
+  outFile << params.m_msgInterval << "\t";
+  outFile << (uint32_t) params.m_isTx << std::endl;
   outFile.close ();
 }
 

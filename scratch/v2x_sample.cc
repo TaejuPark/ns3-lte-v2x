@@ -101,7 +101,7 @@ int
 main (int argc, char *argv[])
 {
   // Initialize some values
-  uint32_t simTime = 6;            // Simulation time in seconds
+  uint32_t simTime = 100;            // Simulation time in seconds
   double ueTxPower = 23.0;         // Transmission power in dBm
   uint32_t ueRespondersPerSector = 1; // Responder UEs per sectors
   uint32_t respondersStart = 1;    // Responders' applications start time
@@ -109,7 +109,7 @@ main (int argc, char *argv[])
   bool onoff = false;              // Use on-off applications
   double responderPktIntvl = 0.1; // Responders' application packet interval in seconds
   uint32_t responderMaxPack = 1;  // Responders' maximum number of packets
-  uint32_t responderPktSize = 800;  // Number of payload bytes in packets
+  uint32_t responderPktSize = 10;  // Number of payload bytes in packets
   uint32_t numRings = 1;            // Number of rings in hexagon cell topology
   double isd = 10;                 // Inter Site Distance
   double minCenterDist = 1;        // Minimum deploy distance to center of cell site
@@ -152,22 +152,29 @@ main (int argc, char *argv[])
   if (enableNsLogs)
     {
       LogLevel logLevel = (LogLevel)(LOG_PREFIX_FUNC | LOG_PREFIX_TIME | LOG_PREFIX_NODE | LOG_LEVEL_DEBUG);
-      LogComponentEnable ("wns3-2017-pscch", logLevel);
+      //LogComponentEnable ("wns3-2017-pscch", logLevel);
 
       //LogComponentEnable ("PointToPointEpcHelper", logLevel);
       //LogComponentEnable ("EpcUeNas", logLevel);
+      //LogComponentEnable ("LteRlc", logLevel);
+      //LogComponentEnable ("LteRlcHeader", logLevel);
+      //LogComponentEnable ("LteRlcAmHeader", logLevel);
+      //LogComponentEnable ("LteRlcAm", logLevel);
+      //LogComponentEnable ("LteRlcTm", logLevel);
+      //LogComponentEnable ("LteRlcUm", logLevel);
       LogComponentEnable ("LteSpectrumPhy", logLevel);
-      //LogComponentEnable ("LteUePhy", logLevel);
+      LogComponentEnable ("LteUePhy", logLevel);
       //LogComponentEnable ("LteUeRrc", logLevel);
       //LogComponentEnable ("LteEnbRrc", logLevel);
       //LogComponentEnable ("LteEnbPhy", logLevel);
-      //LogComponentEnable ("LteUeMac", logLevel);
+      LogComponentEnable ("LteUeMac", logLevel);
       //LogComponentEnable ("LteSlUeRrc", logLevel);
       //LogComponentEnable ("LteSidelinkHelper", logLevel);
       //LogComponentEnable ("LteHelper", logLevel);
       //LogComponentEnable ("LteAmc", logLevel);
       //LogComponentEnable ("Ns2MobilityHelper", logLevel);
-      LogComponentEnable ("OutdoorToOutdoorPropagationLossModel", logLevel);
+      //LogComponentEnable ("OutdoorToOutdoorPropagationLossModel", logLevel);
+      //LogComponentEnable ("UdpEchoClientApplication", logLevel);
     }
 
 

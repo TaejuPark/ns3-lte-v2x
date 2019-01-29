@@ -43,8 +43,10 @@ public:
 
   virtual std::vector<std::vector<double>> GetRssiMap ();
   virtual std::vector<std::vector<double>> GetRsrpMap ();
+  virtual std::vector<std::vector<bool>> GetDecodingMap ();
   virtual void MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod);
   virtual std::vector<uint32_t> GetFeedbackProvidedResources (uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU);
+  virtual void SetNextTxTime (uint32_t txTime);
 
   /**
   * \brief Send The MAC PDU to the channel

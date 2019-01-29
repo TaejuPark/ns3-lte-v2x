@@ -580,7 +580,9 @@ private:
   // UE PHY SAP methods 
   virtual std::vector<std::vector<double>> DoGetRssiMap ();
   virtual std::vector<std::vector<double>> DoGetRsrpMap ();
+  virtual std::vector<std::vector<bool>> DoGetDecodingMap ();
   virtual void DoMoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod);
+  virtual void DoSetNextTxTime (uint32_t txTime);
   virtual std::vector<uint32_t> DoGetFeedbackProvidedResources (uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU);
   virtual void DoSendMacPdu (Ptr<Packet> p);
   /**

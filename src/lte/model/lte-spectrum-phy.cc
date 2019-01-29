@@ -279,6 +279,8 @@ LteSpectrumPhy::LteSpectrumPhy ()
     {
       m_msgLastReception.push_back(0);
     }
+  isTx = false;
+  m_nextTxTime = 0;
 }
 
 
@@ -527,6 +529,17 @@ LteSpectrumPhy::InitRssiRsrpMap ()
       for (int subFrame = 0; subFrame < 1000; subFrame++)
         {
           m_rsrpMap[subChannel].push_back(0.0);
+        }
+    }
+
+  NS_ASSERT (m_decodingMap.size()==0);
+  for (uint32_t subChannel = 0; subChannel < nSubChannel; subChannel++)
+    {
+      std::vector<bool> temp;
+      m_decodingMap.push_back(temp);
+      for (int subFrame = 0; subFrame < 1000; subFrame++)
+        {
+          m_decodingMap[subChannel].push_back(false);
         }
     }
   
@@ -784,7 +797,7 @@ LteSpectrumPhy::StartTxSlDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteContro
   NS_LOG_INFO (this << pb << " ID:" << GetDevice()->GetNode()->GetId() << " State: " << m_state);
 
   m_phyTxStartTrace (pb);
-
+  isTx = true;
   switch (m_state)
   {
     //case RX_DATA:
@@ -832,7 +845,7 @@ LteSpectrumPhy::StartTxSlDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteContro
       txParams->ctrlMsgList = ctrlMsgList;
       m_ulDataSlCheck = true;
 
-      NS_LOG_INFO("StartTx on Spectrum Channel");
+      NS_LOG_DEBUG("StartTx on Spectrum Channel");
       m_channel->StartTx (txParams);
       m_endTxEvent = Simulator::Schedule (duration, &LteSpectrumPhy::EndTxData, this);
     }
@@ -966,10 +979,11 @@ LteSpectrumPhy::EndTxData ()
   NS_LOG_FUNCTION (this);
   NS_LOG_LOGIC (this << " State: " << m_state);
 
-  NS_ASSERT (m_state == TX_DATA);
+  //NS_ASSERT (m_state == TX_DATA);
   m_phyTxEndTrace (m_txPacketBurst);
   m_txPacketBurst = 0;
   ChangeState (IDLE);
+  isTx = false;
 }
 
 void
@@ -1235,7 +1249,7 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
                   NS_LOG_INFO ("Synchronized to transmitter. Already ready to receive PSCCH, PSSCH");
                   if (m_rxPacketInfo.empty ())
                     {
-                      NS_ASSERT (m_state == IDLE);
+                      //NS_ASSERT (m_state == IDLE);
                       // first transmission, i.e., we're IDLE and we start RX
                       m_firstRxStart = Simulator::Now ();
                       m_firstRxDuration = params->duration;
@@ -1244,7 +1258,7 @@ LteSpectrumPhy::StartRxSlData (Ptr<LteSpectrumSignalParametersSlFrame> params)
                     }
                   else
                     {
-                      NS_ASSERT (m_state == RX_DATA);
+                      //NS_ASSERT (m_state == RX_DATA);
                       // sanity check: if there are multiple RX events, they
                       // should occur at the same time and have the same
                       // duration, otherwise the interference calculation
@@ -1785,7 +1799,7 @@ LteSpectrumPhy::EndRxSlData ()
 {
   NS_LOG_FUNCTION (this << " Node ID:" << GetDevice ()->GetNode ()->GetId () << " State: " << m_state);
 
-  NS_ASSERT (m_state == RX_DATA);
+  //NS_ASSERT (m_state == RX_DATA);
 
   // this will trigger CQI calculation and Error Model evaluation
   // as a side effect, the error model should update the error status of all TBs
@@ -2140,10 +2154,12 @@ LteSpectrumPhy::EndRxSlData ()
                 }
             }
         }
-
+      
+      m_isDecoded = false;
       if (!corrupt)
         {
           error = false;       //at least one control packet is OK
+          m_isDecoded = true;
           rxControlMessageOkList.push_back (m_rxPacketInfo[i].m_rxControlMessage);
           //Store the indices of the decoded RBs
           rbDecodedBitmap.insert ( m_rxPacketInfo[i].rbBitmap.begin (), m_rxPacketInfo[i].rbBitmap.end ());
@@ -2199,7 +2215,9 @@ LteSpectrumPhy::EndRxSlData ()
           double deltaY = params.m_rxPosY - params.m_txPosY;
           double distRxTx = std::sqrt(deltaX * deltaX + deltaY * deltaY);
           params.m_neighbor = 0;
-          if (distRxTx < 300.0)
+          params.m_isTx = (uint8_t) isTx;
+          params.m_nextTxTime = m_nextTxTime + 4;
+          if (distRxTx <= 200.0)
             {
               params.m_neighbor = 1;
               if (m_msgLastReception[params.m_rnti-1] == 0)
@@ -2210,9 +2228,25 @@ LteSpectrumPhy::EndRxSlData ()
               else
                 {
                   params.m_msgInterval = params.m_timestamp - m_msgLastReception[params.m_rnti-1];
-                  m_msgLastReception[params.m_rnti-1] = params.m_timestamp;
+                  if (!corrupt)
+                    {
+                      if (params.m_timestamp == params.m_nextTxTime)
+                        {
+                          isTx = true;
+                          params.m_isTx = (uint8_t) isTx;
+                        }
+                      else
+                        {
+                          isTx = false;
+                          params.m_isTx = (uint8_t) isTx;
+                          m_msgLastReception[params.m_rnti-1] = params.m_timestamp;
+                        }
+                    }
                 }
-              m_slPscchReception (params);
+              if(params.m_rxPosX < 100000 && params.m_rxPosY < 100000 && params.m_txPosX < 100000 && params.m_txPosY < 100000)
+                {
+                  m_slPscchReception (params);
+                }
             }
           else
             {
@@ -2449,6 +2483,13 @@ LteSpectrumPhy::GetFeedbackProvidedResources(uint32_t subChannel, uint32_t subFr
   return feedback_RUs;
 }
 
+std::vector<std::vector<bool>>
+LteSpectrumPhy::GetDecodingMap()
+{
+  NS_LOG_FUNCTION (this);
+  return m_decodingMap;
+}
+
 std::vector<std::vector<double>>
 LteSpectrumPhy::GetRssiMap ()
 {
@@ -2471,10 +2512,16 @@ LteSpectrumPhy::MoveSensingWindow(uint32_t removeIdx, uint32_t scPeriod)
   {
     for (unsigned int subChannel = 0; subChannel < 3; subChannel++)
       {
-        m_rssiMap[subChannel][index] = 0;
-        m_rsrpMap[subChannel][index] = 0;
+        m_rssiMap[subChannel][index%1000] = 0;
+        m_rsrpMap[subChannel][index%1000] = 0;
       }
   }
+}
+
+void
+LteSpectrumPhy::SetNextTxTime(uint32_t txTime)
+{
+  m_nextTxTime = txTime;
 }
 
 void
@@ -2510,6 +2557,8 @@ LteSpectrumPhy::UpdateRssiRsrpMap ()
 
       rsrp_dBm = 10 * log10 (1000 * (rsrpSum / static_cast<double> (rbNum)));
       m_rsrpMap[subChannel][subFrame] = rsrp_dBm;
+
+      m_decodingMap[subChannel][subFrame] = m_isDecoded;
     }
 }
 

@@ -84,7 +84,9 @@ public:
   UeMemberLteUePhySapProvider (LteUePhy* phy);
   virtual std::vector<std::vector<double>> GetRssiMap ();
   virtual std::vector<std::vector<double>> GetRsrpMap ();
+  virtual std::vector<std::vector<bool>> GetDecodingMap ();
   virtual void MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod);
+  virtual void SetNextTxTime (uint32_t txTime);
   virtual std::vector<uint32_t> GetFeedbackProvidedResources (uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU);
 
   // inherited from LtePhySapProvider
@@ -116,6 +118,13 @@ UeMemberLteUePhySapProvider::GetRsrpMap ()
   return m_phy->DoGetRsrpMap ();
 }
 
+std::vector<std::vector<bool>>
+UeMemberLteUePhySapProvider::GetDecodingMap ()
+{
+  return m_phy->DoGetDecodingMap ();
+}
+
+
 std::vector<uint32_t>
 UeMemberLteUePhySapProvider::GetFeedbackProvidedResources (uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU)
 {
@@ -126,6 +135,12 @@ void
 UeMemberLteUePhySapProvider::MoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod)
 {
   m_phy->DoMoveSensingWindow (removeIdx, scPeriod);
+}
+
+void
+UeMemberLteUePhySapProvider::SetNextTxTime (uint32_t txTime)
+{
+  m_phy->DoSetNextTxTime (txTime);
 }
 
 void
@@ -610,6 +625,13 @@ LteUePhy::DoGetRsrpMap ()
   return m_sidelinkSpectrumPhy->GetRsrpMap();
 }
 
+std::vector<std::vector<bool>>
+LteUePhy::DoGetDecodingMap ()
+{
+  NS_LOG_FUNCTION (this);
+  return m_sidelinkSpectrumPhy->GetDecodingMap();
+}
+
 std::vector<uint32_t>
 LteUePhy::DoGetFeedbackProvidedResources (uint32_t subChannel, uint32_t subFrame, uint32_t nFeedback, uint32_t totalRU)
 {
@@ -623,6 +645,11 @@ LteUePhy::DoMoveSensingWindow (uint32_t removeIdx, uint32_t scPeriod)
   m_sidelinkSpectrumPhy->MoveSensingWindow (removeIdx, scPeriod);
 }
 
+void
+LteUePhy::DoSetNextTxTime (uint32_t txTime)
+{
+  m_sidelinkSpectrumPhy->SetNextTxTime (txTime);
+}
 void
 LteUePhy::DoSendMacPdu (Ptr<Packet> p)
 {
