@@ -37,7 +37,7 @@
 OVERWRITE=0
 
 SCENARIO="v2x_sample"
-SIMULATION_TIME=100 #Change to 81 seconds to simulate 1000 sidelink periods of 80 ms
+SIMULATION_TIME=15 #Change to 81 seconds to simulate 1000 sidelink periods of 80 ms
 PSCCH_RB_M=22 
 MCS=10
 PSSCH_SUBCHANNEL_RBS=2

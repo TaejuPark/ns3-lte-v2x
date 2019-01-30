@@ -2217,6 +2217,10 @@ LteSpectrumPhy::EndRxSlData ()
           params.m_neighbor = 0;
           params.m_isTx = (uint8_t) isTx;
           params.m_nextTxTime = m_nextTxTime + 4;
+          if (params.m_nextTxTime == params.m_timestamp)
+            {
+              m_isDecoded = false;
+            }
           if (distRxTx <= 200.0)
             {
               params.m_neighbor = 1;
@@ -2514,6 +2518,7 @@ LteSpectrumPhy::MoveSensingWindow(uint32_t removeIdx, uint32_t scPeriod)
       {
         m_rssiMap[subChannel][index%1000] = 0;
         m_rsrpMap[subChannel][index%1000] = 0;
+        m_decodingMap[subChannel][index&1000] = false;
       }
   }
 }
