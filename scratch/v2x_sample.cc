@@ -110,7 +110,7 @@ main (int argc, char *argv[])
   double responderPktIntvl = 0.1; // Responders' application packet interval in seconds
   uint32_t responderMaxPack = 1;  // Responders' maximum number of packets
   uint32_t responderPktSize = 10;  // Number of payload bytes in packets
-  uint32_t numRings = 1;            // Number of rings in hexagon cell topology
+  uint32_t rbPerSubChannel = 10;   // Number of RBs in a subchannel
   double isd = 10;                 // Inter Site Distance
   double minCenterDist = 1;        // Minimum deploy distance to center of cell site
   uint32_t numGroups = 3;           // Number of D2D groups
@@ -130,7 +130,7 @@ main (int argc, char *argv[])
   cmd.AddValue ("time", "Simulation time", simTime);
   cmd.AddValue ("responders", "Number of Responders per sector", ueRespondersPerSector);
   cmd.AddValue ("verbose", "Print time progress", verbose);
-  cmd.AddValue ("ring", "Number of rings in hexagon cell topology", numRings);
+  cmd.AddValue ("rbPerSubChannel", "Number of rings in hexagon cell topology", rbPerSubChannel);
   cmd.AddValue ("isd", "Inter Site Distance", isd);
   cmd.AddValue ("minDist", "Minimum Center Distance for UEs", minCenterDist);
   cmd.AddValue ("groups", "Number of groups", numGroups);
@@ -162,7 +162,7 @@ main (int argc, char *argv[])
       //LogComponentEnable ("LteRlcAm", logLevel);
       //LogComponentEnable ("LteRlcTm", logLevel);
       //LogComponentEnable ("LteRlcUm", logLevel);
-      //LogComponentEnable ("LteSpectrumPhy", logLevel);
+      LogComponentEnable ("LteSpectrumPhy", logLevel);
       //LogComponentEnable ("LteUePhy", logLevel);
       //LogComponentEnable ("LteUeRrc", logLevel);
       //LogComponentEnable ("LteEnbRrc", logLevel);
@@ -224,7 +224,7 @@ main (int argc, char *argv[])
   lteHelper->SetEpcHelper (epcHelper);
   lteHelper->DisableEnbPhy (true); //Disable eNBs for out-of-coverage modeling
   lteHelper->SetV2VMode (true);
-
+  lteHelper->SetRbPerSubChannel(rbPerSubChannel);
   // ProSe
   Ptr<LteSidelinkHelper> proseHelper = CreateObject<LteSidelinkHelper> ();
   proseHelper->SetLteHelper (lteHelper);
@@ -232,7 +232,7 @@ main (int argc, char *argv[])
   // Topology (Hex Grid)
   Ptr<Lte3gppHexGridEnbTopologyHelper> topoHelper = CreateObject<Lte3gppHexGridEnbTopologyHelper> ();
   topoHelper->SetLteHelper (lteHelper);
-  topoHelper->SetNumRings (numRings);
+  //topoHelper->SetNumRings (numRings);
   topoHelper->SetInterSiteDistance (isd);
   topoHelper->SetMinimumDistance (minCenterDist);
   topoHelper->AssignStreams (1);
@@ -303,7 +303,7 @@ main (int argc, char *argv[])
     }
   */
   // Load scenario from SUMO output
-  Ns2MobilityHelper acosta = Ns2MobilityHelper("/home/taeju/git-projects/ns3-lte-v2x/detroit_ns2_mobility.tcl");
+  Ns2MobilityHelper acosta = Ns2MobilityHelper("/home/taeju/git-projects/ns3-lte-v2x/reduced_detroit_ns2_mobility.tcl");
   NodeContainer ueResponders;
   ueResponders.Create(numGroups);
   ueAllNodes.Add (ueResponders);

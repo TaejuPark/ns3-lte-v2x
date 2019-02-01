@@ -249,6 +249,12 @@ LteHelper::SetV2VMode(bool b)
 }
 
 void
+LteHelper::SetRbPerSubChannel(uint32_t rbPerSubChannel)
+{
+  m_rbPerSubChannel = rbPerSubChannel;
+}
+
+void
 LteHelper::ChannelModelInitialization (void)
 {
   // Channel Object (i.e. Ptr<SpectrumChannel>) are within a vector
@@ -854,7 +860,7 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n, NodeContainer c, uint32_t nodeId
     phy->SetSlSpectrumPhy(slPhy);
     slPhy->SetAttribute("CtrlFullDuplexEnabled", BooleanValue (true));
     slPhy->SetAttribute("HalfDuplexPhy", PointerValue(slPhy)); // pointer to sl spectrumphy
-    slPhy->SetRbPerSubChannel (15);
+    slPhy->SetRbPerSubChannel (m_rbPerSubChannel);
           
     Ptr<LteSlChunkProcessor> pSlSinr = Create<LteSlChunkProcessor> ();
     pSlSinr->AddCallback (MakeCallback (&LteSpectrumPhy::UpdateSlSinrPerceived, slPhy));

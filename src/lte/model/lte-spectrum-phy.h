@@ -763,7 +763,7 @@ private:
    */
   void SetSlRxGain (double gain);
 
-  void UpdateRssiRsrpMap ();
+  void UpdateRssiRsrpMap (int sigIndex);
   
   /**
    * \brief Get mean SINR function
@@ -837,6 +837,7 @@ private:
   std::vector<uint32_t> m_msgLastReception;
   uint32_t m_nextTxTime;
   bool m_isDecoded;
+  uint32_t m_txID;
 
   uint16_t m_cellId; ///< the cell ID
   

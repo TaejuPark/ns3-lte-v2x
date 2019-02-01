@@ -43,6 +43,7 @@
 #include <ns3/node.h>
 #include "ns3/enum.h"
 #include <ns3/pointer.h>
+#include <ns3/lte-ue-net-device.h>
 
 namespace ns3 {
 
@@ -845,7 +846,7 @@ LteSpectrumPhy::StartTxSlDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteContro
       txParams->ctrlMsgList = ctrlMsgList;
       m_ulDataSlCheck = true;
 
-      NS_LOG_DEBUG("StartTx on Spectrum Channel");
+      //NS_LOG_DEBUG("StartTx on Spectrum Channel");
       m_channel->StartTx (txParams);
       m_endTxEvent = Simulator::Schedule (duration, &LteSpectrumPhy::EndTxData, this);
     }
@@ -2217,6 +2218,8 @@ LteSpectrumPhy::EndRxSlData ()
           params.m_neighbor = 0;
           params.m_isTx = (uint8_t) isTx;
           params.m_nextTxTime = m_nextTxTime + 4;
+
+          m_txID = params.m_rnti;
           if (params.m_nextTxTime == params.m_timestamp)
             {
               m_isDecoded = false;
@@ -2263,7 +2266,7 @@ LteSpectrumPhy::EndRxSlData ()
         }
     }
 
-  UpdateRssiRsrpMap();
+  UpdateRssiRsrpMap(sortedControlMessages.begin()->index);
   if (ctrlMessageFound)
     {
       if (!error)
@@ -2530,7 +2533,7 @@ LteSpectrumPhy::SetNextTxTime(uint32_t txTime)
 }
 
 void
-LteSpectrumPhy::UpdateRssiRsrpMap ()
+LteSpectrumPhy::UpdateRssiRsrpMap (int sigIndex)
 {
   NS_LOG_FUNCTION (this);
   uint16_t rbNum = 0;
@@ -2539,31 +2542,33 @@ LteSpectrumPhy::UpdateRssiRsrpMap ()
   double rsrpSum = 0.0;
   double rsrp_dBm;
       
-  for (unsigned int index = 0; index < m_slSignalPerceived.size(); index++)
+  Values::const_iterator itIntN = m_slInterferencePerceived[sigIndex].ConstValuesBegin ();
+  Values::const_iterator itPj = m_slSignalPerceived[sigIndex].ConstValuesBegin ();
+  for(itPj = m_slSignalPerceived[sigIndex].ConstValuesBegin ();
+      itPj != m_slSignalPerceived[sigIndex].ConstValuesEnd ();
+      itIntN++, itPj++)
     {
-      Values::const_iterator itIntN = m_slInterferencePerceived[index].ConstValuesBegin ();
-      Values::const_iterator itPj = m_slSignalPerceived[index].ConstValuesBegin ();
-      for(itPj = m_slSignalPerceived[index].ConstValuesBegin ();
-          itPj != m_slSignalPerceived[index].ConstValuesEnd ();
-          itIntN++, itPj++)
-        {
-          rbNum++;
-          double interfPlusNoisePowerTxW = ((*itIntN) * 180000.0) / 12.0;
-          double signalPowerTxW = ((*itPj) * 180000.0) / 12.0;
-          rsrpSum += signalPowerTxW;
-          rssiSum += (2 * (interfPlusNoisePowerTxW + signalPowerTxW));
-        }
+      rbNum++;
+      double interfPlusNoisePowerTxW = ((*itIntN) * 180000.0) / 12.0;
+      double signalPowerTxW = ((*itPj) * 180000.0) / 12.0;
+      rsrpSum += signalPowerTxW;
+      rssiSum += (2 * (interfPlusNoisePowerTxW + signalPowerTxW));
+    }
          
-      int subChannel = std::ceil(m_slRxRbStartIdx / 15);
-      int64_t subFrame = Simulator::Now ().GetMilliSeconds () % 1000;
+  int subChannel = std::ceil(m_slRxRbStartIdx / m_RbPerSubChannel);
+  int64_t subFrame = Simulator::Now ().GetMilliSeconds () % 1000;
 
-      rssi = rssiSum / (double)rbNum;
-      m_rssiMap[subChannel][subFrame] = rssi;
+  rssi = rssiSum / (double)rbNum;
+  m_rssiMap[subChannel][subFrame] = rssi;
 
-      rsrp_dBm = 10 * log10 (1000 * (rsrpSum / static_cast<double> (rbNum)));
-      m_rsrpMap[subChannel][subFrame] = rsrp_dBm;
+  rsrp_dBm = 10 * log10 (1000 * (rsrpSum / static_cast<double> (rbNum)));
+  m_rsrpMap[subChannel][subFrame] = rsrp_dBm;
 
-      m_decodingMap[subChannel][subFrame] = m_isDecoded;
+  m_decodingMap[subChannel][subFrame] = m_isDecoded;
+  Ptr<LteUeNetDevice> lteDevice = DynamicCast<LteUeNetDevice> (m_device);
+  if (lteDevice->GetImsi () == 5)
+    {
+      NS_LOG_DEBUG("TxID = " << m_txID+3 << ", RX subChannel = " << subChannel <<", subFrame = " << subFrame);
     }
 }
 

@@ -37,7 +37,7 @@
 OVERWRITE=0
 
 SCENARIO="v2x_sample"
-SIMULATION_TIME=15 #Change to 81 seconds to simulate 1000 sidelink periods of 80 ms
+SIMULATION_TIME=5 #Change to 81 seconds to simulate 1000 sidelink periods of 80 ms
 PSCCH_RB_M=22 
 MCS=10
 PSSCH_SUBCHANNEL_RBS=2
@@ -76,8 +76,8 @@ PSCCH_RBs=$7  #Number of RBs for PSCCH pool.
 PSCCH_TRP=$8  #PSCCH subframe bitmap
 RESP=$9 #Responder UEs per sector
 
-Rings=1 #Topology Rings
-sites=$((1+6*$Rings*($Rings-1)/2)) #Number of cell sites
+rbPerSubChannel=10 #rbs per subchannel
+sites=1 #Number of cell sites
 #sectors=$(($sites*3)) #Total number of sectors, i.e., 3 sectors per site.
 sectors=1
 #GRP_SECTOR=$RESP #Groups per sectors
@@ -110,9 +110,9 @@ else
   pscchdroponcolstr="pscchdroponcoloff"
 fi
 
-ver="v${subver}_broadcast_sim_${stime}s_HD_${Rings}rings_${RESP}RESP_${GRP}GRP_ISD${isd}_MinDist${min_center_dist}_period${SL_PERIOD}_mcs${SL_MCS}_rb${SL_GRANT_RB}_ktrp${SL_KTRP}_pscchrb${PSCCH_RBs}_pscchtrp${PSCCH_TRP}_${ctrlerrorstr}_${pscchdroponcolstr}_run" #Version for logging run output
+ver="v${subver}_broadcast_sim_${stime}s_HD_${rbPerSubChannel}rbsPerSubChannel_${RESP}RESP_${GRP}GRP_ISD${isd}_MinDist${min_center_dist}_period${SL_PERIOD}_mcs${SL_MCS}_rb${SL_GRANT_RB}_ktrp${SL_KTRP}_pscchrb${PSCCH_RBs}_pscchtrp${PSCCH_TRP}_${ctrlerrorstr}_${pscchdroponcolstr}_run" #Version for logging run output
 basedir="v2x"
-arguments="--responders=$RESP --groups=$GRP --receivers=$GRPrx --ring=$Rings --isd=$isd --minDist=$min_center_dist --time=$stime --respMaxPkt=$r_max_pck --respPktSize=$r_pck_size --respPktIntvl=$r_pck_int --slPeriod=$SL_PERIOD --mcs=$SL_MCS --ktrp=$SL_KTRP --rbSize=$SL_GRANT_RB --pscchRbs=$PSCCH_RBs --pscchTrp=$PSCCH_TRP --ctrlErrorModel=$ctrlerror --dropOnCol=$droponcollision --enableNsLogs=$enableNsLogs"
+arguments="--responders=$RESP --groups=$GRP --receivers=$GRPrx --rbPerSubChannel=$rbPerSubChannel --isd=$isd --minDist=$min_center_dist --time=$stime --respMaxPkt=$r_max_pck --respPktSize=$r_pck_size --respPktIntvl=$r_pck_int --slPeriod=$SL_PERIOD --mcs=$SL_MCS --ktrp=$SL_KTRP --rbSize=$SL_GRANT_RB --pscchRbs=$PSCCH_RBs --pscchTrp=$PSCCH_TRP --ctrlErrorModel=$ctrlerror --dropOnCol=$droponcollision --enableNsLogs=$enableNsLogs"
 linediv="\n-----------------------------------\n"
 
 for ((run=$STARTRUN; run<=$MAXRUNS; run++))
