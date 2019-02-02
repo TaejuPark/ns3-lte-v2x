@@ -199,6 +199,7 @@ LteSlInterference::ConditionallyEvaluateChunk ()
           SpectrumValue interf =  (*m_allSignals) - (*(m_rxSignal[index])) + (*m_noise);
           
           SpectrumValue sinr = (*(m_rxSignal[index])) / interf;
+          SpectrumValue snr = (*(m_rxSignal[index])) / (*m_noise);
           Time duration = Now () - m_lastChangeTime;
           for (std::list<Ptr<LteSlChunkProcessor> >::const_iterator it = m_sinrChunkProcessorList.begin (); it != m_sinrChunkProcessorList.end (); ++it)
             {
@@ -206,7 +207,7 @@ LteSlInterference::ConditionallyEvaluateChunk ()
             }
           for (std::list<Ptr<LteSlChunkProcessor> >::const_iterator it = m_interfChunkProcessorList.begin (); it != m_interfChunkProcessorList.end (); ++it)
             {
-              (*it)->EvaluateChunk (index, interf, duration);
+              (*it)->EvaluateChunk (index, snr, duration);
             }
           for (std::list<Ptr<LteSlChunkProcessor> >::const_iterator it = m_rsPowerChunkProcessorList.begin (); it != m_rsPowerChunkProcessorList.end (); ++it)
             {

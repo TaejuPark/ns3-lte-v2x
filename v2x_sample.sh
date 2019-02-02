@@ -37,7 +37,7 @@
 OVERWRITE=0
 
 SCENARIO="v2x_sample"
-SIMULATION_TIME=5 #Change to 81 seconds to simulate 1000 sidelink periods of 80 ms
+SIMULATION_TIME=100 #Change to 81 seconds to simulate 1000 sidelink periods of 80 ms
 PSCCH_RB_M=22 
 MCS=10
 PSSCH_SUBCHANNEL_RBS=2
@@ -81,7 +81,7 @@ sites=1 #Number of cell sites
 #sectors=$(($sites*3)) #Total number of sectors, i.e., 3 sectors per site.
 sectors=1
 #GRP_SECTOR=$RESP #Groups per sectors
-GRP_SECTOR=215
+GRP_SECTOR=153
 GRP=$(($sectors*$GRP_SECTOR)) #Number of D2D groups in the whole topology
 
 STARTRUN=1 #Run number to start

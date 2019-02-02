@@ -167,7 +167,7 @@ main (int argc, char *argv[])
       //LogComponentEnable ("LteUeRrc", logLevel);
       //LogComponentEnable ("LteEnbRrc", logLevel);
       //LogComponentEnable ("LteEnbPhy", logLevel);
-      LogComponentEnable ("LteUeMac", logLevel);
+      //LogComponentEnable ("LteUeMac", logLevel);
       //LogComponentEnable ("LteSlUeRrc", logLevel);
       //LogComponentEnable ("LteSidelinkHelper", logLevel);
       //LogComponentEnable ("LteHelper", logLevel);
@@ -175,6 +175,7 @@ main (int argc, char *argv[])
       //LogComponentEnable ("Ns2MobilityHelper", logLevel);
       //LogComponentEnable ("OutdoorToOutdoorPropagationLossModel", logLevel);
       //LogComponentEnable ("UdpEchoClientApplication", logLevel);
+      //LogComponentEnable ("LteSlPool", logLevel);
     }
 
 
@@ -562,7 +563,7 @@ main (int argc, char *argv[])
   pfactory.SetControlPeriod (pstream.str ());
   pfactory.SetControlPrbNum (pscchRbs);
   pfactory.SetDataOffset (pscchLength);
-  pfactory.SetRbPerSubChannel (15);
+  pfactory.SetRbPerSubChannel (rbPerSubChannel);
 
   preconfiguration.preconfigComm.pools[0] = pfactory.CreatePool ();
   ueSidelinkConfiguration->SetSlPreconfiguration (preconfiguration);

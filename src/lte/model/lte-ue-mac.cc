@@ -407,6 +407,7 @@ LteUeMac::LteUeMac ()
   m_discTxPool.m_nextDiscPeriod.frameNo = 0;
   m_discTxPool.m_nextDiscPeriod.subframeNo = 0;
   m_v2v = true;
+  m_first = true;
 }
 
 
@@ -1500,8 +1501,10 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                         NS_LOG_INFO ("SL BSR size =" << m_slBsrReceived.size ());
                         SidelinkGrantV2V grantV2V;
                         //NS_LOG_DEBUG (this << " m_reserveCount = " << (uint32_t) poolIt->second.m_reserveCount);
-                        if (poolIt->second.m_reserveCount==0)
+                        uint32_t changeProb = m_ueSelectedUniformVariable->GetInteger(1, 100);
+                        if (m_first || (poolIt->second.m_reserveCount==0 && changeProb >= 1))
                           {
+                            m_first = false;
                             // Semi-Persistent Scheduling (SPS)
                             poolIt->second.m_reserveCount = (uint32_t) m_ueSelectedUniformVariable->GetInteger(5, 15);
                             std::vector<std::vector<double>> rssiMap = m_uePhySapProvider->GetRssiMap();
@@ -1510,8 +1513,21 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
 
                             NS_LOG_INFO ("Succeed getting RSSI Map");
                             // TODO: candidate and avrg_rsrp create with std::vector
-                            bool candidates[3][100] = {false, };
-                            double avrg_rsrp[3][100] = {0.0, };
+                            std::vector<std::vector<bool>> candidates;
+                            std::vector<std::vector<double>> avrg_rsrp;
+
+                            for (uint32_t idx_sc = 0; idx_sc < poolIt->second.m_pool->GetNSubChannel(); idx_sc++)
+                              {
+                                std::vector<bool> boolTemp;
+                                std::vector<double> doubleTemp;
+                                for (uint32_t idx_sf = 0; idx_sf < scPeriod; idx_sf++)
+                                  {
+                                    boolTemp.push_back(false);
+                                    doubleTemp.push_back(0.0);
+                                  }
+                                candidates.push_back(boolTemp);
+                                avrg_rsrp.push_back(doubleTemp);
+                              }
 
                             // monitor check
                             for (uint32_t idx_sc = 0; idx_sc < poolIt->second.m_pool->GetNSubChannel(); idx_sc++)
@@ -1519,6 +1535,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                 for (uint32_t idx_sf = 0; idx_sf < rsrpMap[idx_sc].size(); idx_sf++)
                                   {
                                     avrg_rsrp[idx_sc][idx_sf%scPeriod] += rsrpMap[idx_sc][idx_sf];
+                                    NS_LOG_DEBUG("avrg_rsrp[idx_sc][idx_sf] = "<<avrg_rsrp[idx_sc][idx_sf%scPeriod] << ", idx_sc = "<<idx_sc<<", idx_sf = "<<idx_sf%scPeriod);
                                     if (!m_not_sensed_subframe[idx_sf])
                                       {
                                         candidates[idx_sc][idx_sf%scPeriod] = true;
@@ -1609,7 +1626,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             //NS_LOG_DEBUG("second candidate size = "<<second_candidates_sc.size());
                             // choice a random resource in candidate pool.
                             uint32_t randChosenResource = m_ueSelectedUniformVariable->GetInteger(0, second_candidates_sc.size()-1);
-                            //NS_LOG_DEBUG ("[Chosen Resource] SubFrame: "<<second_candidates_sf[randChosenResource]<<", SubChannel: "<<second_candidates_sc[randChosenResource]);
+                            NS_LOG_DEBUG ("[Chosen Resource] SubFrame: "<<second_candidates_sf[randChosenResource]<<", SubChannel: "<<second_candidates_sc[randChosenResource]);
                             uint32_t subframe = second_candidates_sf[randChosenResource];
                             poolIt->second.m_chosenSubframe = subframe;
 

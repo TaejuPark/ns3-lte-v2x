@@ -2069,8 +2069,10 @@ LteSpectrumPhy::EndRxSlData ()
       int i = (*it).index;
 
       bool corrupt = false;
+      bool weakSignal = false;
       ctrlMessageFound = true;
       uint32_t conflict = false;
+      bool first = true;
       if (m_slCtrlErrorModelEnabled)
         {
           for (std::vector<int>::iterator rbIt =  m_rxPacketInfo[i].rbBitmap.begin ();  rbIt != m_rxPacketInfo[i].rbBitmap.end (); rbIt++)
@@ -2089,6 +2091,7 @@ LteSpectrumPhy::EndRxSlData ()
                 {
                   NS_LOG_INFO (*rbIt << " TB with the similar RB has already been decoded. Avoid to decode it again!");
                   corrupt = true;
+                  first = false;
                   conflict = true;
                   break;
                 }
@@ -2097,32 +2100,26 @@ LteSpectrumPhy::EndRxSlData ()
           if (!corrupt)
             {
               double errorRate;
+              double weakSignalTest;
+              double conflictTest;
               //double lowEnergyTest;
               //bool isCase1 = false;
-              if ( m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::SCI)
+              if (m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::SCI)
                 {
-                  //Average gain for SIMO based on [CatreuxMIMO] --> m_slSinrPerceived[i] * 2.51189
                   NS_LOG_INFO (this << " Average gain for SIMO = " << m_slRxGain << " Watts");
-                  /*lowEnergyTest = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSignalPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
-                  corrupt = m_random->GetValue () > lowEnergyTest ? false : true;
-                  if (corrupt)
+                  weakSignalTest = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slInterferencePerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
+                  weakSignal = m_random->GetValue () > weakSignalTest ? false : true;
+                  if (weakSignal)
                     {
-                      isCase1 = true;
-                      txFeedbackValue = 0;
-                    }*/
-
-                  errorRate = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSinrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
-                  corrupt = m_random->GetValue () > errorRate ? false : true;
-                 /* if (!corrupt)
-                    {
-                    // TODO: how to differentiate two subcases of Case 2
+                      conflict = false;
                     }
-                  else
+                  else if (!weakSignal && !conflict)
                     {
-                      txFeedbackValue = 3;
-                    }*/
+                      conflictTest = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSinrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
+                      conflict = m_random->GetValue () > conflictTest ? false :true;
+                    }
 
-                  NS_LOG_INFO (this << " PSCCH Decoding, errorRate " << errorRate << " error " << corrupt);
+                  NS_LOG_INFO (this << " PSCCH Decoding, weakSignalTest " << weakSignalTest << " error " << corrupt);
                 }
               else if (m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::MIB_SL)
                 {
@@ -2157,7 +2154,7 @@ LteSpectrumPhy::EndRxSlData ()
         }
       
       m_isDecoded = false;
-      if (!corrupt)
+      if (!weakSignal && !conflict)
         {
           error = false;       //at least one control packet is OK
           m_isDecoded = true;
@@ -2175,11 +2172,6 @@ LteSpectrumPhy::EndRxSlData ()
           SciF0ListElement_s scif0 = msg2->GetSciF0 ();
           SciF1ListElement_s scif1 = msg2->GetSciF1 ();
 
-          if (!error)
-            {
-              // TODO: Update feedback information.
-
-            }
 
           SlPhyReceptionStatParameters params;
           params.m_timestamp = Simulator::Now ().GetMilliSeconds ();
@@ -2194,8 +2186,9 @@ LteSpectrumPhy::EndRxSlData ()
           params.m_groupDstId = scif0.m_groupDstId;
           params.m_iTrp = scif0.m_trp;
           params.m_hopping = scif0.m_hopping;
-          params.m_correctness = (uint8_t) !corrupt;
+          params.m_correctness = (uint8_t) !error;
           params.m_conflict = conflict;
+          params.m_weakSignal = weakSignal;
 
           params.m_priority = scif1.m_priority;
           params.m_rnti = scif1.m_rnti;
@@ -2223,8 +2216,48 @@ LteSpectrumPhy::EndRxSlData ()
           if (params.m_nextTxTime == params.m_timestamp)
             {
               m_isDecoded = false;
+
+              // Half-Duplex
+              isTx = true;
+              params.m_isTx = (uint8_t) isTx;
+              params.m_correctness = 0;
+              
+              // Full-Duplex
+              //isTx = false;
+              //params.m_isTx = (uint8_t) isTx;
+              
             }
-          if (distRxTx <= 200.0)
+          else
+            {
+              isTx = false;
+              params.m_isTx = (uint8_t) isTx;
+            }
+
+          uint32_t notReceptType = 0; // (0: recept ok, 1: weak signal, 2: resource confliction, 3: half duplex, 4: unknown)
+          if (params.m_correctness)
+            {
+              notReceptType = 0;
+            }
+          else if(weakSignal)
+            {
+              notReceptType = 1;
+            }
+          else if(conflict)
+            {
+              notReceptType = 2;
+            }
+          else if(isTx)
+            {
+              notReceptType = 3;
+            }
+          else
+            {
+              notReceptType = 4;
+            }
+
+          params.m_rxType = notReceptType;
+
+          if (distRxTx < 150.0)
             {
               params.m_neighbor = 1;
               if (m_msgLastReception[params.m_rnti-1] == 0)
@@ -2235,22 +2268,13 @@ LteSpectrumPhy::EndRxSlData ()
               else
                 {
                   params.m_msgInterval = params.m_timestamp - m_msgLastReception[params.m_rnti-1];
-                  if (!corrupt)
+                  if (params.m_correctness)
                     {
-                      if (params.m_timestamp == params.m_nextTxTime)
-                        {
-                          isTx = true;
-                          params.m_isTx = (uint8_t) isTx;
-                        }
-                      else
-                        {
-                          isTx = false;
-                          params.m_isTx = (uint8_t) isTx;
-                          m_msgLastReception[params.m_rnti-1] = params.m_timestamp;
-                        }
+                      m_msgLastReception[params.m_rnti-1] = params.m_timestamp;
                     }
                 }
-              if(params.m_rxPosX < 100000 && params.m_rxPosY < 100000 && params.m_txPosX < 100000 && params.m_txPosY < 100000)
+              
+              if (params.m_rxPosX < 100000 && params.m_rxPosY < 100000 && params.m_txPosX < 100000 && params.m_txPosY < 100000)
                 {
                   m_slPscchReception (params);
                 }
@@ -2264,9 +2288,12 @@ LteSpectrumPhy::EndRxSlData ()
           // Call trace
           //m_slPscchReception (params);
         }
+      if (first && !isTx)
+        {
+          UpdateRssiRsrpMap(i);
+        }
     }
 
-  UpdateRssiRsrpMap(sortedControlMessages.begin()->index);
   if (ctrlMessageFound)
     {
       if (!error)
@@ -2512,16 +2539,18 @@ LteSpectrumPhy::GetRsrpMap ()
 }
 
 void
-LteSpectrumPhy::MoveSensingWindow(uint32_t removeIdx, uint32_t scPeriod)
+LteSpectrumPhy::MoveSensingWindow(uint32_t sIdx, uint32_t scPeriod)
 {
   NS_LOG_FUNCTION (this);
-  for (unsigned int index = removeIdx; index < removeIdx + scPeriod; index++)
+  uint32_t nSubChannel = std::ceil(50 / m_RbPerSubChannel);
+
+  for (uint32_t idx_sc = 0; idx_sc < nSubChannel; idx_sc++)
   {
-    for (unsigned int subChannel = 0; subChannel < 3; subChannel++)
+    for (uint32_t idx_sf = sIdx; idx_sf < sIdx + scPeriod; idx_sf++)
       {
-        m_rssiMap[subChannel][index%1000] = 0;
-        m_rsrpMap[subChannel][index%1000] = 0;
-        m_decodingMap[subChannel][index&1000] = false;
+        m_rssiMap[idx_sc][idx_sf%1000] = 0;
+        m_rsrpMap[idx_sc][idx_sf%1000] = 0;
+        m_decodingMap[idx_sc][idx_sf&1000] = false;
       }
   }
 }

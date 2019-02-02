@@ -267,6 +267,7 @@ SidelinkCommResourcePool::SetV2XPool (LteRrcSap::SlPreconfigCommPool pool)
 
   m_RbPerSubChannel = pool.rbPerSubChannel;
   m_nSubChannel = std::ceil(50/m_RbPerSubChannel);
+  NS_LOG_DEBUG("m_nSubChannel = " << m_nSubChannel);
   
   for(unsigned int i = 0; i < m_nSubChannel; i++)
     {
@@ -294,6 +295,7 @@ SidelinkCommResourcePool::SetPool (LteRrcSap::SlPreconfigCommPool pool)
 
   m_RbPerSubChannel = pool.rbPerSubChannel;
   m_nSubChannel = std::ceil(50/m_RbPerSubChannel);
+  NS_LOG_DEBUG("pool.rbPerSubChannel = "<<pool.rbPerSubChannel<<", m_nSubChannel = " << m_nSubChannel);
   for(unsigned int i = 0; i < m_nSubChannel; i++)
    {
      m_subChannelRbIndex.push_back(i*m_RbPerSubChannel);
