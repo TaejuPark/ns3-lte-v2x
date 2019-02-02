@@ -249,6 +249,24 @@ LteHelper::SetV2VMode(bool b)
 }
 
 void
+LteHelper::SetTJAlgo (bool TJAlgo)
+{
+  m_TJAlgo = TJAlgo;
+}
+
+void
+LteHelper::SetChangeProb (uint32_t changeProb)
+{
+  m_changeProb = changeProb;
+}
+
+void
+LteHelper::SetEnableFullDuplex (bool enableFullDuplex)
+{
+  m_enableFullDuplex = enableFullDuplex;
+}
+
+void
 LteHelper::SetRbPerSubChannel(uint32_t rbPerSubChannel)
 {
   m_rbPerSubChannel = rbPerSubChannel;
@@ -846,6 +864,8 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n, NodeContainer c, uint32_t nodeId
   cc->SetSlEarfcn(50000);
   cc->SetAsPrimary(true);
   Ptr<LteUeMac> mac = CreateObject<LteUeMac> ();
+  mac->SetTJAlgo (m_TJAlgo);
+  mac->SetChangeProb (m_changeProb);
   cc->SetMac (mac);
   mac->SetUEID (nodeIdx);
   ueCcMap.insert(std::pair<uint8_t, Ptr<ComponentCarrierUe>> (0, cc));
@@ -861,6 +881,7 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n, NodeContainer c, uint32_t nodeId
     slPhy->SetAttribute("CtrlFullDuplexEnabled", BooleanValue (true));
     slPhy->SetAttribute("HalfDuplexPhy", PointerValue(slPhy)); // pointer to sl spectrumphy
     slPhy->SetRbPerSubChannel (m_rbPerSubChannel);
+    slPhy->SetEnableFullDuplex (m_enableFullDuplex);
           
     Ptr<LteSlChunkProcessor> pSlSinr = Create<LteSlChunkProcessor> ();
     pSlSinr->AddCallback (MakeCallback (&LteSpectrumPhy::UpdateSlSinrPerceived, slPhy));

@@ -63,7 +63,9 @@ public:
   LteUeMac ();
   virtual ~LteUeMac ();
   virtual void DoDispose (void);
-
+  void SetTJAlgo (bool TJAlgo);
+  void SetChangeProb (uint32_t changeProb);
+  
   /**
   * \brief Get the LTE MAC SAP provider
   * \return a pointer to the LTE MAC SAP provider
@@ -364,6 +366,8 @@ private:
 
   bool m_v2v;
   bool m_first;
+  bool m_TJAlgo;
+  uint32_t m_changeProb;
   std::vector<bool> m_not_sensed_subframe;
 
 private:

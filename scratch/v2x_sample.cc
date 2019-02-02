@@ -123,7 +123,10 @@ main (int argc, char *argv[])
   uint32_t slPeriod = 48;         // Length of Sidelink period in milliseconds
   bool ctrlErrorModelEnabled = true; // Enable error model in the PSCCH
   bool dropOnCollisionEnabled = false; // Drop PSCCH PSSCH messages on conflicting scheduled resources
-  bool  enableNsLogs = true; // If enabled will output NS LOGs
+  bool enableNsLogs = true; // If enabled will output NS LOGs
+  bool TJAlgo = false;
+  bool enableFullDuplex = false;
+  uint32_t changeProb = 100;
 
   // Command line arguments
   CommandLine cmd;
@@ -147,6 +150,9 @@ main (int argc, char *argv[])
   cmd.AddValue ("ctrlErrorModel", "Enables PSCCH error model", ctrlErrorModelEnabled);
   cmd.AddValue ("dropOnCol", "Drop PSCCH and PSSCH messages on collisions", dropOnCollisionEnabled);
   cmd.AddValue ("enableNsLogs", "Enable NS logs", enableNsLogs);
+  cmd.AddValue ("TJAlgo", "Enable TJ Algo", TJAlgo);
+  cmd.AddValue ("enableFullDuplex", "Enable Full Duplex", enableFullDuplex);
+  cmd.AddValue ("changeProb", "Probability of Change Resource", changeProb);
   cmd.Parse (argc, argv);
 
   if (enableNsLogs)
@@ -162,12 +168,12 @@ main (int argc, char *argv[])
       //LogComponentEnable ("LteRlcAm", logLevel);
       //LogComponentEnable ("LteRlcTm", logLevel);
       //LogComponentEnable ("LteRlcUm", logLevel);
-      LogComponentEnable ("LteSpectrumPhy", logLevel);
+      //LogComponentEnable ("LteSpectrumPhy", logLevel);
       //LogComponentEnable ("LteUePhy", logLevel);
       //LogComponentEnable ("LteUeRrc", logLevel);
       //LogComponentEnable ("LteEnbRrc", logLevel);
       //LogComponentEnable ("LteEnbPhy", logLevel);
-      //LogComponentEnable ("LteUeMac", logLevel);
+      LogComponentEnable ("LteUeMac", logLevel);
       //LogComponentEnable ("LteSlUeRrc", logLevel);
       //LogComponentEnable ("LteSidelinkHelper", logLevel);
       //LogComponentEnable ("LteHelper", logLevel);
@@ -226,6 +232,9 @@ main (int argc, char *argv[])
   lteHelper->DisableEnbPhy (true); //Disable eNBs for out-of-coverage modeling
   lteHelper->SetV2VMode (true);
   lteHelper->SetRbPerSubChannel(rbPerSubChannel);
+  lteHelper->SetTJAlgo(TJAlgo);
+  lteHelper->SetChangeProb(changeProb);
+  lteHelper->SetEnableFullDuplex(enableFullDuplex);
   // ProSe
   Ptr<LteSidelinkHelper> proseHelper = CreateObject<LteSidelinkHelper> ();
   proseHelper->SetLteHelper (lteHelper);

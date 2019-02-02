@@ -282,6 +282,7 @@ LteSpectrumPhy::LteSpectrumPhy ()
     }
   isTx = false;
   m_nextTxTime = 0;
+  m_enableFullDuplex = false;
 }
 
 
@@ -506,6 +507,12 @@ LteSpectrumPhy::SetRbPerSubChannel (uint32_t rbPerSubChannel)
 }
 
 void
+LteSpectrumPhy::SetEnableFullDuplex (bool enableFullDuplex)
+{
+  m_enableFullDuplex = enableFullDuplex;
+}
+
+void
 LteSpectrumPhy::InitRssiRsrpMap ()
 {
   NS_LOG_FUNCTION (this);
@@ -518,7 +525,7 @@ LteSpectrumPhy::InitRssiRsrpMap ()
       m_rssiMap.push_back(temp);
       for (int subFrame = 0; subFrame < 1000; subFrame++)
         {
-          m_rssiMap[subChannel].push_back(0.0);
+          m_rssiMap[subChannel].push_back(-200.0);
         }
     }
 
@@ -529,7 +536,7 @@ LteSpectrumPhy::InitRssiRsrpMap ()
       m_rsrpMap.push_back(temp);
       for (int subFrame = 0; subFrame < 1000; subFrame++)
         {
-          m_rsrpMap[subChannel].push_back(0.0);
+          m_rsrpMap[subChannel].push_back(-200.0);
         }
     }
 
@@ -2217,15 +2224,17 @@ LteSpectrumPhy::EndRxSlData ()
             {
               m_isDecoded = false;
 
-              // Half-Duplex
-              isTx = true;
-              params.m_isTx = (uint8_t) isTx;
-              params.m_correctness = 0;
-              
-              // Full-Duplex
-              //isTx = false;
-              //params.m_isTx = (uint8_t) isTx;
-              
+              if (!m_enableFullDuplex)
+                {
+                  isTx = true;
+                  params.m_isTx = (uint8_t) isTx;
+                  params.m_correctness = 0;
+                }
+              else
+                {
+                  isTx = false;
+                  params.m_isTx = (uint8_t) isTx;
+                }
             }
           else
             {
@@ -2546,12 +2555,15 @@ LteSpectrumPhy::MoveSensingWindow(uint32_t sIdx, uint32_t scPeriod)
 
   for (uint32_t idx_sc = 0; idx_sc < nSubChannel; idx_sc++)
   {
-    for (uint32_t idx_sf = sIdx; idx_sf < sIdx + scPeriod; idx_sf++)
+    /*for (uint32_t idx_sf = sIdx; idx_sf < sIdx + scPeriod; idx_sf++)
       {
         m_rssiMap[idx_sc][idx_sf%1000] = 0;
         m_rsrpMap[idx_sc][idx_sf%1000] = 0;
-        m_decodingMap[idx_sc][idx_sf&1000] = false;
-      }
+        m_decodingMap[idx_sc][idx_sf%1000] = false;
+      }*/
+    m_rssiMap[idx_sc][sIdx] = -200;
+    m_rsrpMap[idx_sc][sIdx] = -200;
+    m_decodingMap[idx_sc][sIdx] = false;
   }
 }
 

@@ -820,6 +820,9 @@ public:
    */
   void InstallSidelinkConfiguration (Ptr<NetDevice> ueDevice, Ptr<LteSlUeRrc> slConfiguration);
   void SetV2VMode (bool b);
+  void SetTJAlgo (bool TJAlgo);
+  void SetChangeProb (uint32_t changeProb);
+  void SetEnableFullDuplex (bool enableFullDuplex);
   void SetRbPerSubChannel (uint32_t rbPerSubChannel);
 
 
@@ -1021,6 +1024,9 @@ private:
   bool m_disableEnbPhy;
 
   bool m_v2v;
+  bool m_TJAlgo;
+  uint32_t m_changeProb;
+  bool m_enableFullDuplex;
   uint32_t m_rbPerSubChannel;
 
 };   // end of `class LteHelper`

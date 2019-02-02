@@ -94,6 +94,9 @@ r_max_pck=100000000 #Used only for constant UDP appliation; it is disregarded wh
 ctrlerror=1 #0 for disabled or 1 enabled; when disabled, bypass errors in PSCCH to evaluate PSSCH only.
 droponcollision=0 #Drop PSCCH and PSSCH messages on conflicting scheduled resources
 enableNsLogs=1 #0 for disabled or 1 enabled; when enabled will output NS LOGs
+TJAlgo=1
+enableFullDuplex=0
+changeProb=100
 
 v_letter="b" #a: no wrap-around topology, b: wrap-around topology
 subver="2${v_letter}"
@@ -111,13 +114,23 @@ else
 fi
 
 ver="v${subver}_broadcast_sim_${stime}s_HD_${rbPerSubChannel}rbsPerSubChannel_${RESP}RESP_${GRP}GRP_ISD${isd}_MinDist${min_center_dist}_period${SL_PERIOD}_mcs${SL_MCS}_rb${SL_GRANT_RB}_ktrp${SL_KTRP}_pscchrb${PSCCH_RBs}_pscchtrp${PSCCH_TRP}_${ctrlerrorstr}_${pscchdroponcolstr}_run" #Version for logging run output
-basedir="v2x"
-arguments="--responders=$RESP --groups=$GRP --receivers=$GRPrx --rbPerSubChannel=$rbPerSubChannel --isd=$isd --minDist=$min_center_dist --time=$stime --respMaxPkt=$r_max_pck --respPktSize=$r_pck_size --respPktIntvl=$r_pck_int --slPeriod=$SL_PERIOD --mcs=$SL_MCS --ktrp=$SL_KTRP --rbSize=$SL_GRANT_RB --pscchRbs=$PSCCH_RBs --pscchTrp=$PSCCH_TRP --ctrlErrorModel=$ctrlerror --dropOnCol=$droponcollision --enableNsLogs=$enableNsLogs"
+
+if [ $TJAlgo -eq 0 ] && [ $enableFullDuplex -eq 0 ];then
+  basedir="v2x_SPS_HD"
+elif [ $TJAlgo -eq 1 ] && [ $enableFullDuplex -eq 0 ];then
+  basedir="v2x_TJ_HD"
+elif [ $TJAlgo -eq 0 ] && [ $enableFullDuplex -eq 1 ];then
+  basedir="v2x_SPS_FD"
+elif [ $TJAlgo -eq 1 ] && [ $enableFullDuplex -eq 1 ];then
+  basedir="v2x_TJ_FD"
+fi
+
+arguments="--responders=$RESP --groups=$GRP --receivers=$GRPrx --rbPerSubChannel=$rbPerSubChannel --isd=$isd --minDist=$min_center_dist --time=$stime --respMaxPkt=$r_max_pck --respPktSize=$r_pck_size --respPktIntvl=$r_pck_int --slPeriod=$SL_PERIOD --mcs=$SL_MCS --ktrp=$SL_KTRP --rbSize=$SL_GRANT_RB --pscchRbs=$PSCCH_RBs --pscchTrp=$PSCCH_TRP --ctrlErrorModel=$ctrlerror --dropOnCol=$droponcollision --enableNsLogs=$enableNsLogs --TJAlgo=$TJAlgo --enableFullDuplex=$enableFullDuplex --changeProb=$changeProb"
 linediv="\n-----------------------------------\n"
 
 for ((run=$STARTRUN; run<=$MAXRUNS; run++))
 do
-  newdir="${basedir}_${run}"
+  newdir="${basedir}_${changeProb}"
   if [[ -d $newdir && $OVERWRITE == "0" ]];then
     echo -e "$newdir exist!\nNO OVERWRITE PERMISSION!"
     continue

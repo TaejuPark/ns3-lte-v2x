@@ -279,6 +279,7 @@ public:
 
   // inherited from SpectrumPhy
   void SetRbPerSubChannel (uint32_t rbPerSubChannel);
+  void SetEnableFullDuplex (bool enableFullDuplex);
   void InitRssiRsrpMap ();
   void SetChannel (Ptr<SpectrumChannel> c);
   void SetNodeList (NodeContainer c);
@@ -796,6 +797,7 @@ private:
   Ptr<NetDevice> m_device; ///< the device
 
   uint32_t m_RbPerSubChannel;
+  bool m_enableFullDuplex;
   Ptr<SpectrumChannel> m_channel; ///< the channel
 
   Ptr<const SpectrumModel> m_rxSpectrumModel; ///< the spectrum model
