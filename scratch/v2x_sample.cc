@@ -168,7 +168,7 @@ main (int argc, char *argv[])
       //LogComponentEnable ("LteRlcAm", logLevel);
       //LogComponentEnable ("LteRlcTm", logLevel);
       //LogComponentEnable ("LteRlcUm", logLevel);
-      //LogComponentEnable ("LteSpectrumPhy", logLevel);
+      LogComponentEnable ("LteSpectrumPhy", logLevel);
       //LogComponentEnable ("LteUePhy", logLevel);
       //LogComponentEnable ("LteUeRrc", logLevel);
       //LogComponentEnable ("LteEnbRrc", logLevel);

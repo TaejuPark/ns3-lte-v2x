@@ -1522,6 +1522,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             m_first = false;
                             // Semi-Persistent Scheduling (SPS)
                             poolIt->second.m_reserveCount = (uint32_t) m_ueSelectedUniformVariable->GetInteger(5, 15);
+                            poolIt->second.m_reserveCount--; // decrement by 1
                             std::vector<std::vector<double>> rssiMap = m_uePhySapProvider->GetRssiMap();
                             std::vector<std::vector<double>> rsrpMap = m_uePhySapProvider->GetRsrpMap();
                             std::vector<std::vector<bool>> decodingMap = m_uePhySapProvider->GetDecodingMap();
@@ -1548,7 +1549,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             // monitor check
                             for (uint32_t idx_sc = 0; idx_sc < poolIt->second.m_pool->GetNSubChannel(); idx_sc++)
                               {
-                                int tempMod = 47;
+                                int tempMod = scPeriod-1;
                                 for (uint32_t idx_sf = (frameNo-1)*10 + (subframeNo-1) - 1; idx_sf >= (frameNo-1)*10+(subframeNo-1) - 1000; idx_sf--)
                                   {
                                     avrg_rsrp[idx_sc][tempMod] += rsrpMap[idx_sc][idx_sf%1000];
@@ -1561,7 +1562,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                     tempMod--;
                                     if (tempMod < 0)
                                       {
-                                        tempMod = 47;
+                                        tempMod = scPeriod-1;
                                       }
                                   }
                               }
@@ -1649,9 +1650,9 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             //NS_LOG_DEBUG("second candidate size = "<<second_candidates_sc.size());
                             // choice a random resource in candidate pool.
                             uint32_t randChosenResource = m_ueSelectedUniformVariable->GetInteger(0, second_candidates_sc.size()-1);
-                            NS_LOG_DEBUG ("[New Chosen Resource] SubFrame: "<<second_candidates_sf[randChosenResource]<<", SubChannel: "<<second_candidates_sc[randChosenResource]);
                             uint32_t subframe = second_candidates_sf[randChosenResource];
                             poolIt->second.m_chosenSubframe = subframe;
+                            NS_LOG_DEBUG ("[New Chosen Resource] SubFrame: "<<poolIt->second.m_chosenSubframe<<", SubChannel: "<<second_candidates_sc[randChosenResource]);
 
                             //uint32_t subframe = m_ueSelectedUniformVariable->GetInteger(0, poolIt->second.m_pool->GetScPeriod()-1);
                             SidelinkCommResourcePool::SubframeInfo relativeSubframe;
@@ -1682,14 +1683,13 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                             grantV2V.m_rbLen = 8; // subchannel size:10Rb, 2 Rbs for SCI, 8 rbs for data (m_slGrantSize = 2)
                             grantV2V.m_mcs = m_slGrantMcs;
                             grantV2V.m_tbSize = 0; //computed later
-
-                            for (uint32_t idx_sf = (frameNo-1)*10 + (subframeNo-1); idx_sf < (frameNo-1)*10 + (subframeNo-1) + scPeriod; idx_sf++)
-                               {
-                                 m_not_sensed_subframe[idx_sf%1000] = false;
-                               }
                           }
                         else
                           {
+                            if (poolIt->second.m_reserveCount==0)
+                              {
+                                poolIt->second.m_reserveCount = (uint32_t) m_ueSelectedUniformVariable->GetInteger(5, 15);
+                              }
                             poolIt->second.m_reserveCount--; // decrement by 1
                             grantV2V = poolIt->second.m_prevGrantV2V;
                             uint32_t scPeriod = poolIt->second.m_pool->GetScPeriod ();
@@ -1698,8 +1698,7 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                               {
                                 std::vector<std::vector<bool>> decodingMap = m_uePhySapProvider->GetDecodingMap();
                                 std::vector<uint32_t> decodedSubframe;
-                                int selfLocation = -1;
-                                uint32_t selfFlag = false;
+                                uint32_t selfLocation = 0;
                                 uint32_t sIdx;
 
                                 if ((grantV2V.m_grantedSubframe.frameNo-1) *10 + (grantV2V.m_grantedSubframe.subframeNo-1) > poolIt->second.m_chosenSubframe)
@@ -1711,43 +1710,36 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                     sIdx = poolIt->second.m_chosenSubframe - ((grantV2V.m_grantedSubframe.frameNo-1) * 10 + (grantV2V.m_grantedSubframe.subframeNo-1));
                                   }
 
-                                //NS_LOG_DEBUG ("lastSubframe = "<<((grantV2V.m_grantedSubframe.frameNo-1)*10 + (grantV2V.m_grantedSubframe.subframeNo-1))<<", lastSubframe scPeriod startIdx = "<<sIdx);
+                                decodedSubframe.push_back(poolIt->second.m_chosenSubframe);
                                 for (uint32_t idx_sf = sIdx; idx_sf < sIdx+scPeriod; idx_sf++)
                                   {
                                     if (decodingMap[grantV2V.m_subChannelIndex][idx_sf%1000])
                                       {
                                         decodedSubframe.push_back(idx_sf - sIdx);
-                                        if (!selfFlag)
-                                          {
-                                            selfLocation++;
-                                          }
-                                      }
-                                    else if (idx_sf == (grantV2V.m_grantedSubframe.frameNo-1) * 10 + (grantV2V.m_grantedSubframe.subframeNo-1))
-                                      {
-                                        decodedSubframe.push_back(idx_sf - sIdx);
-                                        selfLocation++;
-                                        selfFlag = true;
                                       }
                                   }
                                
                                 uint32_t nextSubframe = poolIt->second.m_chosenSubframe;
-                                if (decodedSubframe.size() > grantV2V.m_subChannelIndex)
+                                while (decodedSubframe.size() <= grantV2V.m_subChannelIndex)
                                   {
-                                    NS_LOG_DEBUG ("decodedSubframe.size() = "<<decodedSubframe.size()<<", selfLocation = "<<selfLocation);
-                                    nextSubframe = decodedSubframe[(selfLocation + (int)grantV2V.m_subChannelIndex) % decodedSubframe.size()];
-                                  }
-                                else
-                                  {
-                                    while (decodedSubframe.size() <= grantV2V.m_subChannelIndex)
+                                    unsigned int randSubframe = m_ueSelectedUniformVariable->GetInteger(0, scPeriod-1);
+                                    if ( std::find(decodedSubframe.begin(), decodedSubframe.end(), randSubframe) == decodedSubframe.end() )
                                       {
-                                        unsigned int randSubframe = m_ueSelectedUniformVariable->GetInteger(0, scPeriod-1);
-                                        if ( std::find(decodedSubframe.begin(), decodedSubframe.end(), randSubframe) == decodedSubframe.end() )
-                                          {
-                                            decodedSubframe.push_back(randSubframe);
-                                          }
+                                        decodedSubframe.push_back(randSubframe);
                                       }
-                                    nextSubframe = decodedSubframe[(selfLocation + (int)grantV2V.m_subChannelIndex) % decodedSubframe.size()];
                                   }
+
+                                std::sort(decodedSubframe.begin(), decodedSubframe.end());
+                                for (uint32_t idx = 0; idx < decodedSubframe.size(); idx++)
+                                  {
+                                    if (decodedSubframe[idx] == poolIt->second.m_chosenSubframe)
+                                      {
+                                        selfLocation = idx;
+                                      }
+                                  }
+                                
+                                nextSubframe = decodedSubframe[(selfLocation + (int)grantV2V.m_subChannelIndex) % decodedSubframe.size()];
+
                                 poolIt->second.m_chosenSubframe = nextSubframe;
                                 SidelinkCommResourcePool::SubframeInfo relativeSubframe;
                                 SidelinkCommResourcePool::SubframeInfo ultimateSubframe;
@@ -1779,16 +1771,12 @@ LteUeMac::DoSubframeIndication (uint32_t frameNo, uint32_t subframeNo)
                                     ultimateSubframe.subframeNo -= 10;
                                   }
                                 grantV2V.m_grantedSubframe = ultimateSubframe;
+                                NS_LOG_DEBUG ("[Re Chosen Resource] SubFrame: "<<poolIt->second.m_chosenSubframe<<", SubChannel: "<< (uint32_t)grantV2V.m_subChannelIndex);
                                 m_uePhySapProvider->SetNextTxTime(Simulator::Now ().GetMilliSeconds () + poolIt->second.m_chosenSubframe);
                               }
                             
                             //NS_LOG_DEBUG("Assigned frameNo: " << grantV2V.m_grantedSubframe.frameNo << " subframeNo: " << grantV2V.m_grantedSubframe.subframeNo);
-                            //m_uePhySapProvider->MoveSensingWindow((frameNo-1)*10 + (subframeNo-1), scPeriod);
-                            
-                            for (uint32_t idx_sf = (frameNo-1)*10 + (subframeNo-1); idx_sf < (frameNo-1)*10 + (subframeNo-1) + scPeriod; idx_sf++)
-                               {
-                                 m_not_sensed_subframe[idx_sf%1000] = false;
-                               }
+                            //m_uePhySapProvider->MoveSensingWindow((frameNo-1)*10 + (subframeNo-1), scPeriod); 
                           }
  
                         uint32_t reservedSubframe = (grantV2V.m_grantedSubframe.frameNo-1) * 10 + (grantV2V.m_grantedSubframe.subframeNo-1);

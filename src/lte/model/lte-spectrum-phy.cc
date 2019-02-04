@@ -2043,6 +2043,8 @@ LteSpectrumPhy::EndRxSlData ()
         }
     }
 
+  //NS_LOG_DEBUG ("sortedControlMessages.size() = " << sortedControlMessages.size());
+
   if (m_dropRbOnCollisionEnabled)
     {
       NS_LOG_DEBUG (this << "Ctrl DropOnCollisionEnabled");
@@ -2078,7 +2080,7 @@ LteSpectrumPhy::EndRxSlData ()
       bool corrupt = false;
       bool weakSignal = false;
       ctrlMessageFound = true;
-      uint32_t conflict = false;
+      bool conflict = false;
       bool first = true;
       if (m_slCtrlErrorModelEnabled)
         {
@@ -2103,12 +2105,12 @@ LteSpectrumPhy::EndRxSlData ()
                   break;
                 }
              }
-
+          //NS_LOG_DEBUG("begin RB= " << m_rxPacketInfo[i].rbBitmap[0] << ", end RB= " << m_rxPacketInfo[i].rbBitmap[m_rxPacketInfo[i].rbBitmap.size()-1]);
           if (!corrupt)
             {
               double errorRate;
               double weakSignalTest;
-              double conflictTest;
+              //double conflictTest;
               //double lowEnergyTest;
               //bool isCase1 = false;
               if (m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::SCI)
@@ -2116,15 +2118,16 @@ LteSpectrumPhy::EndRxSlData ()
                   NS_LOG_INFO (this << " Average gain for SIMO = " << m_slRxGain << " Watts");
                   weakSignalTest = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slInterferencePerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
                   weakSignal = m_random->GetValue () > weakSignalTest ? false : true;
-                  if (weakSignal)
-                    {
-                      conflict = false;
-                    }
-                  else if (!weakSignal && !conflict)
-                    {
-                      conflictTest = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSinrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
-                      conflict = m_random->GetValue () > conflictTest ? false :true;
-                    }
+                  //if (weakSignal)
+                  //  {
+                  //    conflict = true;
+                  //  }
+                  //else if (!weakSignal && !conflict)
+                  //if (!conflict)
+                  //  {
+                  //    conflictTest = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSinrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
+                  //    conflict = m_random->GetValue () > conflictTest ? false :true;
+                  //  }
 
                   NS_LOG_INFO (this << " PSCCH Decoding, weakSignalTest " << weakSignalTest << " error " << corrupt);
                 }
@@ -2160,7 +2163,10 @@ LteSpectrumPhy::EndRxSlData ()
             }
         }
       
+      error = true;
       m_isDecoded = false;
+      conflict = false;
+     // weakSignal = false;
       if (!weakSignal && !conflict)
         {
           error = false;       //at least one control packet is OK
@@ -2218,7 +2224,7 @@ LteSpectrumPhy::EndRxSlData ()
           params.m_neighbor = 0;
           params.m_isTx = (uint8_t) isTx;
           params.m_nextTxTime = m_nextTxTime + 4;
-
+          
           m_txID = params.m_rnti;
           if (params.m_nextTxTime == params.m_timestamp)
             {
