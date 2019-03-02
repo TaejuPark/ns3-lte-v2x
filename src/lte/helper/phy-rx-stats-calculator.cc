@@ -277,9 +277,9 @@ PhyRxStatsCalculator::SlPscchReception (SlPhyReceptionStatParameters params)
         }
       m_slPscchRxFirstWrite = false;
       //outFile << "% time\tcellId\tIMSI\tRNTI\tmcs\tsize\tresPscch\trbLen\trbStart\tiTrp\thopping\tgroupDstId\tcorrect";
-      outFile << "time\tTXID\tRXID\tWeak\tCflict\tNeiBor\tItervl\tisTx\tRxType\t";
+      //outFile << "time\tTJAlgo\tTXID\tRXID\tWeak\tCflict\tNeiBor\tItervl\tisTx\tRxType\t";
       //outFile << "time\tTXID\tRXID\tRxPosX\tRxPosY\tCorrect\tNeighbour";
-      outFile << std::endl;
+      //outFile << std::endl;
     }
   else
     {
@@ -307,6 +307,7 @@ PhyRxStatsCalculator::SlPscchReception (SlPhyReceptionStatParameters params)
   outFile << (uint32_t) params.m_correctness <<std::endl;*/
 
   outFile << params.m_timestamp << "\t";
+  outFile << params.m_TJAlgo << "\t";
   //outFile << params.m_nextTxTime << "\t";
   outFile << params.m_rnti << "\t";
   outFile << params.m_imsi << "\t";

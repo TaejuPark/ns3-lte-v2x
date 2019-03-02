@@ -49,6 +49,7 @@ LteInterference::DoDispose ()
   NS_LOG_FUNCTION (this);
   m_rsPowerChunkProcessorList.clear ();
   m_sinrChunkProcessorList.clear ();
+  m_snrChunkProcessorList.clear ();
   m_interfChunkProcessorList.clear ();
   m_rxSignal = 0;
   m_allSignals = 0;
@@ -90,6 +91,10 @@ LteInterference::StartRx (Ptr<const SpectrumValue> rxPsd)
         {
           (*it)->Start (); 
         }
+      for (std::list<Ptr<LteChunkProcessor> >::const_iterator it = m_snrChunkProcessorList.begin (); it != m_snrChunkProcessorList.end (); ++it)
+        {
+          (*it)->Start (); 
+        }
     }
   else
     {
@@ -124,6 +129,10 @@ LteInterference::EndRx ()
           (*it)->End ();
         }
       for (std::list<Ptr<LteChunkProcessor> >::const_iterator it = m_sinrChunkProcessorList.begin (); it != m_sinrChunkProcessorList.end (); ++it)
+        {
+          (*it)->End (); 
+        }
+      for (std::list<Ptr<LteChunkProcessor> >::const_iterator it = m_snrChunkProcessorList.begin (); it != m_snrChunkProcessorList.end (); ++it)
         {
           (*it)->End (); 
         }
@@ -200,11 +209,15 @@ LteInterference::ConditionallyEvaluateChunk ()
         }
       for (std::list<Ptr<LteChunkProcessor> >::const_iterator it = m_interfChunkProcessorList.begin (); it != m_interfChunkProcessorList.end (); ++it)
         {
-          (*it)->EvaluateChunk (snr, duration);
+          (*it)->EvaluateChunk (interf, duration);
         }
       for (std::list<Ptr<LteChunkProcessor> >::const_iterator it = m_rsPowerChunkProcessorList.begin (); it != m_rsPowerChunkProcessorList.end (); ++it)
         {
           (*it)->EvaluateChunk (*m_rxSignal, duration);
+        }
+      for (std::list<Ptr<LteChunkProcessor> >::const_iterator it = m_snrChunkProcessorList.begin (); it != m_snrChunkProcessorList.end (); ++it)
+        {
+          (*it)->EvaluateChunk (snr, duration);
         }
       m_lastChangeTime = Now ();
     }
@@ -241,6 +254,13 @@ LteInterference::AddSinrChunkProcessor (Ptr<LteChunkProcessor> p)
 {
   NS_LOG_FUNCTION (this << p);
   m_sinrChunkProcessorList.push_back (p);
+}
+
+void
+LteInterference::AddSnrChunkProcessor (Ptr<LteChunkProcessor> p)
+{
+  NS_LOG_FUNCTION (this << p);
+  m_snrChunkProcessorList.push_back (p);
 }
 
 void

@@ -64,6 +64,7 @@ public:
    * \param p The chunk processor for SINR evaluation
    */
   void AddSinrChunkProcessor (Ptr<LteChunkProcessor> p);
+  void AddSnrChunkProcessor (Ptr<LteChunkProcessor> p);
 
   /**
    * Add a LteChunkProcessor that will use the time-vs-frequency
@@ -165,6 +166,7 @@ private:
   /** all the processor instances that need to be notified whenever
       a new SINR chunk is calculated */
   std::list<Ptr<LteChunkProcessor> > m_sinrChunkProcessorList;
+  std::list<Ptr<LteChunkProcessor> > m_snrChunkProcessorList;
 
   /** all the processor instances that need to be notified whenever
       a new interference chunk is calculated */

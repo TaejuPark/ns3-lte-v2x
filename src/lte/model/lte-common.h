@@ -294,6 +294,7 @@ struct SlPhyReceptionStatParameters
   uint32_t m_nextTxTime;
   uint32_t m_rxType;
   uint32_t m_weakSignal;
+  uint32_t m_TJAlgo;
 
   // Position
   int32_t m_rxPosX;

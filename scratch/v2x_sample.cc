@@ -45,7 +45,7 @@
 #include <ns3/buildings-module.h>
 #include <cfloat>
 #include <sstream>
-
+#include <string>
 
 
 using namespace ns3;
@@ -107,7 +107,7 @@ main (int argc, char *argv[])
   uint32_t respondersStart = 1;    // Responders' applications start time
   bool verbose = false;            // Print time progress
   bool onoff = false;              // Use on-off applications
-  double responderPktIntvl = 0.1; // Responders' application packet interval in seconds
+  double responderPktIntvl = 0.05; // Responders' application packet interval in seconds
   uint32_t responderMaxPack = 1;  // Responders' maximum number of packets
   uint32_t responderPktSize = 10;  // Number of payload bytes in packets
   uint32_t rbPerSubChannel = 10;   // Number of RBs in a subchannel
@@ -120,13 +120,14 @@ main (int argc, char *argv[])
   uint32_t ktrp = 1;               // Transmissions opportunities in a Time Repetition Pattern(number of subframes to transmit on)
   uint32_t pscchRbs = 22;         // PSCCH pool size in RBs. Note, the PSCCH occupied bandwidth will be at least twice this amount.
   std::string pscchBitmapHexstring = "0x00000000FF"; // PSCCH time bitmap [40 bits]
-  uint32_t slPeriod = 48;         // Length of Sidelink period in milliseconds
+  uint32_t slPeriod = 50;         // Length of Sidelink period in milliseconds
   bool ctrlErrorModelEnabled = true; // Enable error model in the PSCCH
   bool dropOnCollisionEnabled = false; // Drop PSCCH PSSCH messages on conflicting scheduled resources
   bool enableNsLogs = true; // If enabled will output NS LOGs
-  bool TJAlgo = false;
+  uint32_t TJAlgo = 0;
   bool enableFullDuplex = false;
   uint32_t changeProb = 100;
+  uint32_t vehiclePercent = 10;
 
   // Command line arguments
   CommandLine cmd;
@@ -153,6 +154,7 @@ main (int argc, char *argv[])
   cmd.AddValue ("TJAlgo", "Enable TJ Algo", TJAlgo);
   cmd.AddValue ("enableFullDuplex", "Enable Full Duplex", enableFullDuplex);
   cmd.AddValue ("changeProb", "Probability of Change Resource", changeProb);
+  cmd.AddValue ("vehiclePercent", "percentages of simulated vehicles", vehiclePercent);
   cmd.Parse (argc, argv);
 
   if (enableNsLogs)
@@ -168,7 +170,7 @@ main (int argc, char *argv[])
       //LogComponentEnable ("LteRlcAm", logLevel);
       //LogComponentEnable ("LteRlcTm", logLevel);
       //LogComponentEnable ("LteRlcUm", logLevel);
-      LogComponentEnable ("LteSpectrumPhy", logLevel);
+      //LogComponentEnable ("LteSpectrumPhy", logLevel);
       //LogComponentEnable ("LteUePhy", logLevel);
       //LogComponentEnable ("LteUeRrc", logLevel);
       //LogComponentEnable ("LteEnbRrc", logLevel);
@@ -313,7 +315,8 @@ main (int argc, char *argv[])
     }
   */
   // Load scenario from SUMO output
-  Ns2MobilityHelper acosta = Ns2MobilityHelper("/home/taeju/git-projects/ns3-lte-v2x/reduced_detroit_ns2_mobility.tcl");
+  std::string scenario_file = "/home/taeju/git-projects/ns3-lte-v2x/sumo_scenarios/highway_" + std::to_string(vehiclePercent) + "p_vehicle.tcl";
+  Ns2MobilityHelper acosta = Ns2MobilityHelper(scenario_file);
   NodeContainer ueResponders;
   ueResponders.Create(numGroups);
   ueAllNodes.Add (ueResponders);

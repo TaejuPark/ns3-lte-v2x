@@ -42,7 +42,7 @@ PSCCH_RB_M=22
 MCS=10
 PSSCH_SUBCHANNEL_RBS=2
 KTRP=2
-PERIOD_LENGTH=48
+PERIOD_LENGTH=100
 PACKET_PAYLOAD_SIZE=10 # responderPktSize
 MIN_UES_PER_SECTOR=3 #3 used for evaluations
 MAX_UES_PER_SECTOR=3 #33 used for evaluations
@@ -50,9 +50,9 @@ PSCCH_SF_BITMAPS="0xFFFFFFFFFF" #Bitmap must be 40 bits
 
 function run_config ()
 {
-  if [ "$#" -ne 12 ];then
+  if [ "$#" -ne 14 ];then
     echo "$#"
-    echo "Expects 12 arguments"
+    echo "Expects 14 arguments"
     exit
   fi
 
@@ -78,6 +78,8 @@ function run_config ()
   TJAlgo=${10}
   enableFullDuplex=${11}
   changeProb=${12}
+  vehiclePercent=${13}
+  GRP_SECTOR=${14}
   
   echo "$stime $TJAlgo $enableFullDuplex $changeProb"
   rbPerSubChannel=10 #rbs per subchannel
@@ -85,7 +87,7 @@ function run_config ()
   #sectors=$(($sites*3)) #Total number of sectors, i.e., 3 sectors per site.
   sectors=1
   #GRP_SECTOR=$RESP #Groups per sectors
-  GRP_SECTOR=153
+  #GRP_SECTOR=180
   GRP=$(($sectors*$GRP_SECTOR)) #Number of D2D groups in the whole topology
 
   STARTRUN=1 #Run number to start
@@ -116,22 +118,24 @@ function run_config ()
 
   ver="v${subver}_broadcast_sim_${stime}s_HD_${rbPerSubChannel}rbsPerSubChannel_${RESP}RESP_${GRP}GRP_ISD${isd}_MinDist${min_center_dist}_period${SL_PERIOD}_mcs${SL_MCS}_rb${SL_GRANT_RB}_ktrp${SL_KTRP}_pscchrb${PSCCH_RBs}_pscchtrp${PSCCH_TRP}_${ctrlerrorstr}_${pscchdroponcolstr}_run" #Version for logging run output
 
-  if [ $TJAlgo -eq 0 ] && [ $enableFullDuplex -eq 0 ];then
-    basedir="v2x_SPS_HD"
-  elif [ $TJAlgo -eq 1 ] && [ $enableFullDuplex -eq 0 ];then
-    basedir="v2x_TJ_HD"
-  elif [ $TJAlgo -eq 0 ] && [ $enableFullDuplex -eq 1 ];then
-    basedir="v2x_SPS_FD"
-  elif [ $TJAlgo -eq 1 ] && [ $enableFullDuplex -eq 1 ];then
-    basedir="v2x_TJ_FD"
-  fi
+  
+  basedir="v2x_TJ"
+#  if [ $TJAlgo -eq 0 ] && [ $enableFullDuplex -eq 0 ];then
+#    basedir="v2x_SPS_HD"
+#  elif [ $TJAlgo -eq 1 ] && [ $enableFullDuplex -eq 0 ];then
+#    basedir="v2x_TJ_HD"
+#  elif [ $TJAlgo -eq 0 ] && [ $enableFullDuplex -eq 1 ];then
+#    basedir="v2x_SPS_FD"
+#  elif [ $TJAlgo -eq 1 ] && [ $enableFullDuplex -eq 1 ];then
+#    basedir="v2x_TJ_FD"
+#  fi
 
-  arguments="--responders=$RESP --groups=$GRP --receivers=$GRPrx --rbPerSubChannel=$rbPerSubChannel --isd=$isd --minDist=$min_center_dist --time=$stime --respMaxPkt=$r_max_pck --respPktSize=$r_pck_size --respPktIntvl=$r_pck_int --slPeriod=$SL_PERIOD --mcs=$SL_MCS --ktrp=$SL_KTRP --rbSize=$SL_GRANT_RB --pscchRbs=$PSCCH_RBs --pscchTrp=$PSCCH_TRP --ctrlErrorModel=$ctrlerror --dropOnCol=$droponcollision --enableNsLogs=$enableNsLogs --TJAlgo=$TJAlgo --enableFullDuplex=$enableFullDuplex --changeProb=$changeProb"
+  arguments="--responders=$RESP --groups=$GRP --receivers=$GRPrx --rbPerSubChannel=$rbPerSubChannel --isd=$isd --minDist=$min_center_dist --time=$stime --respMaxPkt=$r_max_pck --respPktSize=$r_pck_size --respPktIntvl=$r_pck_int --slPeriod=$SL_PERIOD --mcs=$SL_MCS --ktrp=$SL_KTRP --rbSize=$SL_GRANT_RB --pscchRbs=$PSCCH_RBs --pscchTrp=$PSCCH_TRP --ctrlErrorModel=$ctrlerror --dropOnCol=$droponcollision --enableNsLogs=$enableNsLogs --TJAlgo=$TJAlgo --enableFullDuplex=$enableFullDuplex --changeProb=$changeProb --vehiclePercent=$vehiclePercent"
 linediv="\n-----------------------------------\n"
 
   for ((run=$STARTRUN; run<=$MAXRUNS; run++))
   do
-    newdir="${basedir}_${changeProb}"
+    newdir="${basedir}_${TJAlgo}_VP_${vehiclePercent}"
     if [[ -d $newdir && $OVERWRITE == "0" ]];then
       echo -e "$newdir exist!\nNO OVERWRITE PERMISSION!"
       continue
@@ -167,7 +171,7 @@ echo "Execution status is logged in ${main_log_file}"
 echo -e "\n============== `date` ============" >> $LOG
 echo -e "\n============== `date` ============" >> $main_log_file
 
-# Last 3 arguments (TJAlgo, enableFullDuplex, changeProb)
+# Last 5 arguments (TJAlgo Percent, enableFullDuplex, changeProb, vehiclePercent, #vehicle)
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 20 >> $main_log_file 2>&1 &
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 30 >> $main_log_file 2>&1 &
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 40 >> $main_log_file 2>&1 &
@@ -183,7 +187,7 @@ echo -e "\n============== `date` ============" >> $main_log_file
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 1 40 >> $main_log_file 2>&1 &
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 1 50 >> $main_log_file 2>&1 &
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 1 60 >> $main_log_file 2>&1 &
-run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 1 70 >> $main_log_file 2>&1 &
+#run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 1 70 >> $main_log_file 2>&1 &
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 1 80 >> $main_log_file 2>&1 &
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 1 90 >> $main_log_file 2>&1 &
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 1 100 >> $main_log_file 2>&1 &
@@ -197,4 +201,48 @@ run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PAC
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 1 0 80 >> $main_log_file 2>&1 &
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 1 0 90 >> $main_log_file 2>&1 &
 #run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 1 0 100 >> $main_log_file 2>&1 &
+
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 100 10 55 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 100 20 105 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 100 30 180 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 100 40 225 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 100 50 279 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 100 60 333 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 100 70 395 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 100 80 448 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 100 90 507 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 0 0 100 100 563 >> $main_log_file 2>&1 &
+
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 100 0 100 10 55 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 100 0 100 20 105 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 100 0 100 30 180 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 100 0 100 40 225 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 100 0 100 50 279 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 100 0 100 60 333 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 100 0 100 70 395 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 100 0 100 80 448 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 100 0 100 90 507 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 100 0 100 100 563 >> $main_log_file 2>&1 &
+
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 50 0 100 10 55 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 50 0 100 20 105 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 50 0 100 30 180 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 50 0 100 40 225 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 50 0 100 50 279 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 50 0 100 60 333 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 50 0 100 70 395 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 50 0 100 80 448 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 50 0 100 90 507 >> $main_log_file 2>&1 &
+run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 50 0 100 100 563 >> $main_log_file 2>&1 &
+
+#run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 10 0 100 >> $main_log_file 2>&1 &
+#run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 20 0 100 >> $main_log_file 2>&1 &
+#run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 30 0 100 >> $main_log_file 2>&1 &
+#run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 40 0 100 >> $main_log_file 2>&1 &
+#run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 50 0 100 >> $main_log_file 2>&1 &
+#run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 60 0 100 >> $main_log_file 2>&1 &
+#run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 70 0 100 >> $main_log_file 2>&1 &
+#run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 80 0 100 >> $main_log_file 2>&1 &
+#run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 90 0 100 >> $main_log_file 2>&1 &
+#run_config $SIMULATION_TIME $PERIOD_LENGTH $MCS $PSSCH_SUBCHANNEL_RBS $KTRP $PACKET_PAYLOAD_SIZE $PSCCH_RB_M $PSCCH_SF_BITMAPS $MIN_UES_PER_SECTOR 100 0 100 >> $main_log_file 2>&1 &
 

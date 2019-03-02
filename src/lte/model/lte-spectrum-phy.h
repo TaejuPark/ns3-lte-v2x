@@ -280,6 +280,7 @@ public:
   // inherited from SpectrumPhy
   void SetRbPerSubChannel (uint32_t rbPerSubChannel);
   void SetEnableFullDuplex (bool enableFullDuplex);
+  void SetTJAlgo (bool TJAlgo);
   void InitRssiRsrpMap ();
   void SetChannel (Ptr<SpectrumChannel> c);
   void SetNodeList (NodeContainer c);
@@ -542,7 +543,8 @@ public:
    *
    * \param p The new LteSlChunkProcessor to be added to the Sidelink processing chain
    */
-   void AddSlSinrChunkProcessor (Ptr<LteSlChunkProcessor> p);
+  void AddSlSinrChunkProcessor (Ptr<LteSlChunkProcessor> p);
+  void AddSlSnrChunkProcessor (Ptr<LteSlChunkProcessor> p);
 
   /**
    *
@@ -611,7 +613,8 @@ public:
    *
    * \param sinr vector of SINR perceived per each RB per Sidelink packet
    */
-   void UpdateSlSinrPerceived (std::vector <SpectrumValue> sinr);
+  void UpdateSlSinrPerceived (std::vector <SpectrumValue> sinr);
+  void UpdateSlSnrPerceived (std::vector <SpectrumValue> snr);
 
   /**
    *
@@ -798,6 +801,7 @@ private:
 
   uint32_t m_RbPerSubChannel;
   bool m_enableFullDuplex;
+  bool m_TJAlgo;
   Ptr<SpectrumChannel> m_channel; ///< the channel
 
   Ptr<const SpectrumModel> m_rxSpectrumModel; ///< the spectrum model
@@ -853,6 +857,7 @@ private:
   std::set<uint8_t> m_l1GroupIds; ///< identifiers for D2D layer 1 filtering
   expectedSlTbs_t m_expectedSlTbs; ///< the expected Sidelink Communication TBS
   std::vector<SpectrumValue> m_slSinrPerceived; ///< SINR for each D2D packet received
+  std::vector<SpectrumValue> m_slSnrPerceived; ///< SINR for each D2D packet received
   std::vector<SpectrumValue> m_slSignalPerceived; ///< Signal for each D2D packet received
   std::vector<SpectrumValue> m_slInterferencePerceived; ///< interference for each D2D packet received
   std::vector<SlRxPacketInfo_t> m_rxPacketInfo; ///< Sidelink received packet information

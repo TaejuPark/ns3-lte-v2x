@@ -513,6 +513,12 @@ LteSpectrumPhy::SetEnableFullDuplex (bool enableFullDuplex)
 }
 
 void
+LteSpectrumPhy::SetTJAlgo (bool TJAlgo)
+{
+  m_TJAlgo = TJAlgo;
+}
+
+void
 LteSpectrumPhy::InitRssiRsrpMap ()
 {
   NS_LOG_FUNCTION (this);
@@ -743,6 +749,17 @@ LteSpectrumPhy::StartTxDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteControlM
   NS_LOG_FUNCTION (this << pb << " State: " << m_state);
   
   m_phyTxStartTrace (pb);
+
+  
+  double txPosX = m_mobility->GetPosition ().x;
+  double txPosY = m_mobility->GetPosition ().y;
+  if (txPosX >= 100000 || txPosY >= 100000)
+    {
+      // Fake Transmission for speed up simulation.
+      m_txPacketBurst = 0;
+      isTx = false;
+      return true;
+    }
   
   switch (m_state)
     {
@@ -767,7 +784,7 @@ LteSpectrumPhy::StartTxDataFrame (Ptr<PacketBurst> pb, std::list<Ptr<LteControlM
       */
       NS_ASSERT (m_txPsd);
       m_txPacketBurst = pb;
-      
+
       // we need to convey some PHY meta information to the receiver
       // to be used for simulation purposes (e.g., the CellId). This
       // is done by setting the ctrlMsgList parameter of
@@ -1504,6 +1521,13 @@ LteSpectrumPhy::UpdateSlSinrPerceived (std::vector <SpectrumValue> sinr)
 }
 
 void
+LteSpectrumPhy::UpdateSlSnrPerceived (std::vector <SpectrumValue> snr)
+{
+  NS_LOG_FUNCTION (this);
+  m_slSnrPerceived = snr;
+}
+
+void
 LteSpectrumPhy::UpdateSlSigPerceived (std::vector <SpectrumValue> signal)
 {
   NS_LOG_FUNCTION (this);
@@ -2082,6 +2106,7 @@ LteSpectrumPhy::EndRxSlData ()
       ctrlMessageFound = true;
       bool conflict = false;
       bool first = true;
+      bool secondOverlap = false;
       if (m_slCtrlErrorModelEnabled)
         {
           for (std::vector<int>::iterator rbIt =  m_rxPacketInfo[i].rbBitmap.begin ();  rbIt != m_rxPacketInfo[i].rbBitmap.end (); rbIt++)
@@ -2100,6 +2125,7 @@ LteSpectrumPhy::EndRxSlData ()
                 {
                   NS_LOG_INFO (*rbIt << " TB with the similar RB has already been decoded. Avoid to decode it again!");
                   corrupt = true;
+                  secondOverlap = true;
                   first = false;
                   conflict = true;
                   break;
@@ -2110,24 +2136,24 @@ LteSpectrumPhy::EndRxSlData ()
             {
               double errorRate;
               double weakSignalTest;
-              //double conflictTest;
+              double conflictTest;
               //double lowEnergyTest;
               //bool isCase1 = false;
               if (m_rxPacketInfo[i].m_rxControlMessage->GetMessageType () == LteControlMessage::SCI)
                 {
                   NS_LOG_INFO (this << " Average gain for SIMO = " << m_slRxGain << " Watts");
-                  weakSignalTest = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slInterferencePerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
+                  weakSignalTest = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSnrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
                   weakSignal = m_random->GetValue () > weakSignalTest ? false : true;
-                  //if (weakSignal)
-                  //  {
-                  //    conflict = true;
-                  //  }
-                  //else if (!weakSignal && !conflict)
+                  if (weakSignal)
+                    {
+                      conflict = true;
+                    }
+                  else if (!weakSignal && !conflict)
                   //if (!conflict)
-                  //  {
-                  //    conflictTest = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSinrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
-                  //    conflict = m_random->GetValue () > conflictTest ? false :true;
-                  //  }
+                    {
+                      conflictTest = LteNistErrorModel::GetPscchBler (m_fadingModel,LteNistErrorModel::SISO, GetMeanSinr (m_slSinrPerceived[i] * m_slRxGain, m_rxPacketInfo[i].rbBitmap)).tbler;
+                      conflict = m_random->GetValue () > conflictTest ? false :true;
+                    }
 
                   NS_LOG_INFO (this << " PSCCH Decoding, weakSignalTest " << weakSignalTest << " error " << corrupt);
                 }
@@ -2165,8 +2191,8 @@ LteSpectrumPhy::EndRxSlData ()
       
       error = true;
       m_isDecoded = false;
-      conflict = false;
-     // weakSignal = false;
+      // conflict = false;
+      // weakSignal = false;
       if (!weakSignal && !conflict)
         {
           error = false;       //at least one control packet is OK
@@ -2213,20 +2239,24 @@ LteSpectrumPhy::EndRxSlData ()
           params.m_frameNo = scif1.m_frameNo;
           params.m_subframeNo = scif1.m_subframeNo;
 
+          params.m_TJAlgo = m_TJAlgo;
           params.m_rxPosX = m_mobility->GetPosition ().x;
           params.m_rxPosY = m_mobility->GetPosition ().y;
           params.m_txPosX = m_nodeList.Get(params.m_rnti-1) -> GetObject<MobilityModel> () -> GetPosition ().x;
           params.m_txPosY = m_nodeList.Get(params.m_rnti-1) -> GetObject<MobilityModel> () -> GetPosition ().y;
+          //NS_LOG_DEBUG("Receive Time = " << params.m_timestamp << ", from TxId = " << params.m_rnti + 3);
 
           double deltaX = params.m_rxPosX - params.m_txPosX;
           double deltaY = params.m_rxPosY - params.m_txPosY;
           double distRxTx = std::sqrt(deltaX * deltaX + deltaY * deltaY);
           params.m_neighbor = 0;
           params.m_isTx = (uint8_t) isTx;
+          
           params.m_nextTxTime = m_nextTxTime + 4;
+          //NS_LOG_DEBUG("At TxID = " << params.m_rnti + 3 << ", Next Tx Time = " << m_nextTxTime << ", Current Receive Time = " << params.m_timestamp);
           
           m_txID = params.m_rnti;
-          if (params.m_nextTxTime == params.m_timestamp)
+          if (params.m_timestamp == params.m_nextTxTime)
             {
               m_isDecoded = false;
 
@@ -2257,15 +2287,15 @@ LteSpectrumPhy::EndRxSlData ()
             {
               notReceptType = 1;
             }
-          else if(conflict)
+          else if(secondOverlap)
             {
               notReceptType = 2;
             }
-          else if(isTx)
+          else if(!secondOverlap && conflict)
             {
               notReceptType = 3;
             }
-          else
+          else if(isTx)
             {
               notReceptType = 4;
             }
@@ -2275,7 +2305,16 @@ LteSpectrumPhy::EndRxSlData ()
           if (distRxTx < 150.0)
             {
               params.m_neighbor = 1;
-              if (m_msgLastReception[params.m_rnti-1] == 0)
+              params.m_msgInterval = m_msgLastReception[params.m_rnti-1];
+              if (params.m_correctness)
+                {
+                  m_msgLastReception[params.m_rnti-1] = 0;
+                }
+              else
+                {
+                  m_msgLastReception[params.m_rnti-1]++;
+                }
+              /*if (m_msgLastReception[params.m_rnti-1] == 0)
                 {
                   params.m_msgInterval = 0;
                   m_msgLastReception[params.m_rnti-1] = params.m_timestamp;
@@ -2287,10 +2326,12 @@ LteSpectrumPhy::EndRxSlData ()
                     {
                       m_msgLastReception[params.m_rnti-1] = params.m_timestamp;
                     }
-                }
+                }*/
               
               if (params.m_rxPosX < 100000 && params.m_rxPosY < 100000 && params.m_txPosX < 100000 && params.m_txPosY < 100000)
                 {
+                  NS_LOG_DEBUG("Receive Time = " << params.m_timestamp << ", from TxId = " << params.m_rnti + 3);
+                  NS_LOG_DEBUG("Current Receiver Next Tx Time = " << m_nextTxTime << ", Current Receive Time = " << params.m_timestamp);
                   m_slPscchReception (params);
                 }
             }
@@ -2465,6 +2506,12 @@ LteSpectrumPhy::AddCtrlSinrChunkProcessor (Ptr<LteChunkProcessor> p)
 }
 
 void
+LteSpectrumPhy::AddSlSnrChunkProcessor (Ptr<LteSlChunkProcessor> p)
+{
+  m_interferenceSl->AddSnrChunkProcessor (p);
+}
+
+void
 LteSpectrumPhy::AddSlSinrChunkProcessor (Ptr<LteSlChunkProcessor> p)
 {
   m_interferenceSl->AddSinrChunkProcessor (p);
@@ -2577,6 +2624,7 @@ void
 LteSpectrumPhy::SetNextTxTime(uint32_t txTime)
 {
   m_nextTxTime = txTime;
+  NS_LOG_DEBUG("Next Tx Time = " << txTime);
 }
 
 void
@@ -2615,7 +2663,7 @@ LteSpectrumPhy::UpdateRssiRsrpMap (int sigIndex)
   Ptr<LteUeNetDevice> lteDevice = DynamicCast<LteUeNetDevice> (m_device);
   if (lteDevice->GetImsi () == 5)
     {
-      NS_LOG_DEBUG("TxID = " << m_txID+3 << ", RX subChannel = " << subChannel <<", subFrame = " << subFrame);
+      NS_LOG_INFO("TxID = " << m_txID+3 << ", RX subChannel = " << subChannel <<", subFrame = " << subFrame);
     }
 }
 
@@ -2705,7 +2753,7 @@ LteSpectrumPhy::SetSlRxGain (double gain)
   NS_LOG_FUNCTION (this << gain);
   // convert to linear
   gain = std::pow (10.0, (gain / 10.0));
-  NS_LOG_DEBUG("Linear gain = "<<gain);
+  NS_LOG_INFO("Linear gain = "<<gain);
   m_slRxGain = gain;
 }
 
@@ -2838,7 +2886,7 @@ LteSpectrumPhy::RxDiscovery ()
       pInfo.sinr = meanSinr;
       pInfo.index = (*itSinrDisc).second;
       sortedDiscMessages.insert (pInfo);
-      NS_LOG_DEBUG ("sortedDiscMessages size = "<<sortedDiscMessages.size() << " SINR = " << pInfo.sinr << " Index = " << pInfo.index);
+      NS_LOG_INFO ("sortedDiscMessages size = "<<sortedDiscMessages.size() << " SINR = " << pInfo.sinr << " Index = " << pInfo.index);
     }
 
   if (m_dropRbOnCollisionEnabled)

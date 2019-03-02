@@ -628,8 +628,10 @@ public:
     enum
     {
       sf16,
+      sf20,
       sf40,
       sf48,
+      sf50,
       sf60,
       sf70,
       sf80,
@@ -657,11 +659,17 @@ public:
       case 16:
         p.period = SlPeriodComm::sf16;
         break;
+      case 20:
+        p.period = SlPeriodComm::sf20;
+        break;
       case 40:
         p.period = SlPeriodComm::sf40;
         break;
       case 48:
         p.period = SlPeriodComm::sf48;
+        break;
+      case 50:
+        p.period = SlPeriodComm::sf50;
         break;
       case 60:
         p.period = SlPeriodComm::sf60;
@@ -714,11 +722,17 @@ public:
       case SlPeriodComm::sf16:
         p = 16;
         break;
+      case SlPeriodComm::sf20:
+        p = 20;
+        break;
       case SlPeriodComm::sf40:
         p = 40;
         break;
       case SlPeriodComm::sf48:
         p = 48;
+        break;
+      case SlPeriodComm::sf50:
+        p = 50;
         break;
       case SlPeriodComm::sf60:
         p = 60;
@@ -1172,6 +1186,7 @@ public:
       sf20,
       sf32,
       sf40,
+      sf50,
       sf64,
       sf80,
       sf128,

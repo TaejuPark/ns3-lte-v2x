@@ -249,7 +249,7 @@ LteHelper::SetV2VMode(bool b)
 }
 
 void
-LteHelper::SetTJAlgo (bool TJAlgo)
+LteHelper::SetTJAlgo (uint32_t TJAlgo)
 {
   m_TJAlgo = TJAlgo;
 }
@@ -864,7 +864,19 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n, NodeContainer c, uint32_t nodeId
   cc->SetSlEarfcn(50000);
   cc->SetAsPrimary(true);
   Ptr<LteUeMac> mac = CreateObject<LteUeMac> ();
-  mac->SetTJAlgo (m_TJAlgo);
+  Ptr<UniformRandomVariable> urv = CreateObject<UniformRandomVariable> ();
+  uint32_t probTJAlgo = urv->GetInteger(1, 100);
+  bool isTJAlgo = false;
+  if (probTJAlgo >= (101 - m_TJAlgo))
+    {
+      mac->SetTJAlgo (true); // m_TJAlgo% -> TJAlgo
+      isTJAlgo = true;
+    }
+  else
+    {
+      mac->SetTJAlgo (false); // (100 - m_TJAlgo)% -> SPS
+    }
+  //mac->SetTJAlgo(m_TJAlgo);
   mac->SetChangeProb (m_changeProb);
   cc->SetMac (mac);
   mac->SetUEID (nodeIdx);
@@ -882,10 +894,15 @@ LteHelper::InstallSingleVueDevice (Ptr<Node> n, NodeContainer c, uint32_t nodeId
     slPhy->SetAttribute("HalfDuplexPhy", PointerValue(slPhy)); // pointer to sl spectrumphy
     slPhy->SetRbPerSubChannel (m_rbPerSubChannel);
     slPhy->SetEnableFullDuplex (m_enableFullDuplex);
+    slPhy->SetTJAlgo(isTJAlgo);
           
     Ptr<LteSlChunkProcessor> pSlSinr = Create<LteSlChunkProcessor> ();
     pSlSinr->AddCallback (MakeCallback (&LteSpectrumPhy::UpdateSlSinrPerceived, slPhy));
     slPhy->AddSlSinrChunkProcessor (pSlSinr);
+    
+    Ptr<LteSlChunkProcessor> pSlSnr = Create<LteSlChunkProcessor> ();
+    pSlSnr->AddCallback (MakeCallback (&LteSpectrumPhy::UpdateSlSnrPerceived, slPhy));
+    slPhy->AddSlSnrChunkProcessor (pSlSnr);
 
     Ptr<LteSlChunkProcessor> pSlSignal = Create<LteSlChunkProcessor> ();
     pSlSignal->AddCallback (MakeCallback (&LteSpectrumPhy::UpdateSlSigPerceived, slPhy));
