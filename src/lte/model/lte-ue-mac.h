@@ -416,6 +416,9 @@ private:
   uint32_t m_subframeNo; ///< subframe number
   uint8_t m_raRnti; ///< RA RNTI
   bool m_waitingForRaResponse; ///< waiting for RA response
+  uint32_t m_phase1_selected_sc;
+  uint32_t m_phase1_selected_sf;
+  bool m_onmove;
 
   /// Sidelink Communication related variables
   struct SidelinkLcIdentifier

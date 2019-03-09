@@ -307,6 +307,7 @@ PhyRxStatsCalculator::SlPscchReception (SlPhyReceptionStatParameters params)
   outFile << (uint32_t) params.m_correctness <<std::endl;*/
 
   outFile << params.m_timestamp << "\t";
+  outFile << (uint32_t) params.m_frl << "\t";
   outFile << params.m_TJAlgo << "\t";
   //outFile << params.m_nextTxTime << "\t";
   outFile << params.m_rnti << "\t";
@@ -317,8 +318,9 @@ PhyRxStatsCalculator::SlPscchReception (SlPhyReceptionStatParameters params)
   //outFile << params.m_rxPosY << "\t";
   outFile << (uint32_t) params.m_weakSignal << "\t";
   outFile << params.m_conflict << "\t";
-  outFile << params.m_neighbor << "\t";
+  //outFile << params.m_neighbor << "\t";
   outFile << params.m_msgInterval << "\t";
+  outFile << params.m_consecutiveMiss << "\t";
   outFile << (uint32_t) params.m_isTx << "\t";
   outFile << params.m_rxType <<std::endl;
   outFile.close ();

@@ -117,15 +117,15 @@ LteRlcUm::DoTransmitPdcpPdu (Ptr<Packet> p)
       NS_LOG_LOGIC ("Tx Buffer: New packet added");
       m_txBuffer.push_back (p);
       m_txBufferSize += p->GetSize ();
-      NS_LOG_LOGIC ("NumOfBuffers = " << m_txBuffer.size() );
-      NS_LOG_LOGIC ("txBufferSize = " << m_txBufferSize);
+      NS_LOG_DEBUG ("Added p->GetSize = " << p->GetSize() );
+      NS_LOG_DEBUG ("[1] txBufferSize = " << m_txBufferSize);
     }
   else
     {
       // Discard full RLC SDU
       NS_LOG_LOGIC ("TxBuffer is full. RLC SDU discarded");
       NS_LOG_LOGIC ("MaxTxBufferSize = " << m_maxTxBufferSize);
-      NS_LOG_LOGIC ("txBufferSize    = " << m_txBufferSize);
+      NS_LOG_LOGIC ("[2] txBufferSize    = " << m_txBufferSize);
       NS_LOG_LOGIC ("packet size     = " << p->GetSize ());
     }
 
@@ -176,7 +176,7 @@ LteRlcUm::DoNotifyTxOpportunity (uint32_t bytes, uint8_t layer, uint8_t harqId, 
   NS_LOG_LOGIC ("Remove SDU from TxBuffer");
   Ptr<Packet> firstSegment = (*(m_txBuffer.begin ()))->Copy ();
   m_txBufferSize -= (*(m_txBuffer.begin()))->GetSize ();
-  NS_LOG_LOGIC ("txBufferSize      = " << m_txBufferSize );
+  NS_LOG_DEBUG ("[3] txBufferSize      = " << m_txBufferSize );
   m_txBuffer.erase (m_txBuffer.begin ());
 
   while ( firstSegment && (firstSegment->GetSize () > 0) && (nextSegmentSize > 0) )
@@ -231,7 +231,7 @@ LteRlcUm::DoNotifyTxOpportunity (uint32_t bytes, uint8_t layer, uint8_t harqId, 
               NS_LOG_LOGIC ("    TX buffer: Give back the remaining segment");
               NS_LOG_LOGIC ("    TX buffers = " << m_txBuffer.size ());
               NS_LOG_LOGIC ("    Front buffer size = " << (*(m_txBuffer.begin()))->GetSize ());
-              NS_LOG_LOGIC ("    txBufferSize = " << m_txBufferSize );
+              NS_LOG_LOGIC ("[4]    txBufferSize = " << m_txBufferSize );
             }
           else
             {
@@ -331,7 +331,7 @@ LteRlcUm::DoNotifyTxOpportunity (uint32_t bytes, uint8_t layer, uint8_t harqId, 
           firstSegment = (*(m_txBuffer.begin ()))->Copy ();
           m_txBufferSize -= (*(m_txBuffer.begin()))->GetSize ();
           m_txBuffer.erase (m_txBuffer.begin ());
-          NS_LOG_LOGIC ("        txBufferSize = " << m_txBufferSize );
+          NS_LOG_DEBUG ("[5]        txBufferSize = " << m_txBufferSize );
         }
 
     }

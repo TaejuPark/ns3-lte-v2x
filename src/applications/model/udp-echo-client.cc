@@ -174,7 +174,7 @@ UdpEchoClient::StartApplication (void)
 
   m_socket->SetRecvCallback (MakeCallback (&UdpEchoClient::HandleRead, this));
   m_socket->SetAllowBroadcast (true);
-  ScheduleTransmit (Seconds (0.));
+  ScheduleTransmit (Seconds (0.) + MilliSeconds(16));
 }
 
 void 
@@ -306,7 +306,7 @@ void
 UdpEchoClient::Send (void)
 {
   NS_LOG_FUNCTION (this);
-
+  NS_LOG_DEBUG ("current time = " << Simulator::Now ().GetMilliSeconds ());
   NS_ASSERT (m_sendEvent.IsExpired ());
 
   Ptr<Packet> p;

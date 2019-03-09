@@ -276,13 +276,15 @@ LteSpectrumPhy::LteSpectrumPhy ()
     }
   
   m_slRxRbStartIdx = 0;
-  for (uint32_t i = 0; i < 300; i++)
+  for (uint32_t i = 0; i < 1000; i++)
     {
       m_msgLastReception.push_back(0);
+      m_consecutiveMiss.push_back(0);
     }
   isTx = false;
   m_nextTxTime = 0;
   m_enableFullDuplex = false;
+  m_50ms = false;
 }
 
 
@@ -531,7 +533,7 @@ LteSpectrumPhy::InitRssiRsrpMap ()
       m_rssiMap.push_back(temp);
       for (int subFrame = 0; subFrame < 1000; subFrame++)
         {
-          m_rssiMap[subChannel].push_back(-200.0);
+          m_rssiMap[subChannel].push_back(-1000.0);
         }
     }
 
@@ -542,7 +544,7 @@ LteSpectrumPhy::InitRssiRsrpMap ()
       m_rsrpMap.push_back(temp);
       for (int subFrame = 0; subFrame < 1000; subFrame++)
         {
-          m_rsrpMap[subChannel].push_back(-200.0);
+          m_rsrpMap[subChannel].push_back(-1000.0);
         }
     }
 
@@ -2107,6 +2109,7 @@ LteSpectrumPhy::EndRxSlData ()
       bool conflict = false;
       bool first = true;
       bool secondOverlap = false;
+      NS_LOG_DEBUG("meanSinr = " << (*it).sinr);
       if (m_slCtrlErrorModelEnabled)
         {
           for (std::vector<int>::iterator rbIt =  m_rxPacketInfo[i].rbBitmap.begin ();  rbIt != m_rxPacketInfo[i].rbBitmap.end (); rbIt++)
@@ -2305,14 +2308,23 @@ LteSpectrumPhy::EndRxSlData ()
           if (distRxTx < 150.0)
             {
               params.m_neighbor = 1;
-              params.m_msgInterval = m_msgLastReception[params.m_rnti-1];
+              params.m_consecutiveMiss = m_consecutiveMiss[params.m_rnti-1];
+              params.m_msgInterval = params.m_timestamp - m_msgLastReception[params.m_rnti-1];
+
+              if (m_msgLastReception[params.m_rnti-1] == 0)
+                {
+                  params.m_msgInterval = 0;
+                }
               if (params.m_correctness)
                 {
-                  m_msgLastReception[params.m_rnti-1] = 0;
+                  m_consecutiveMiss[params.m_rnti-1] = 0;
+                  m_msgLastReception[params.m_rnti-1] = params.m_timestamp;;
+                  //NS_LOG_DEBUG("[In 150m] TxID = " << params.m_rnti + 3 << ", m_msgLastReception[params.m_rnti-1] = " << m_msgLastReception[params.m_rnti-1]);
                 }
               else
                 {
-                  m_msgLastReception[params.m_rnti-1]++;
+                  m_consecutiveMiss[params.m_rnti-1]++;
+                  //m_msgLastReception[params.m_rnti-1]++;
                 }
               /*if (m_msgLastReception[params.m_rnti-1] == 0)
                 {
@@ -2330,14 +2342,21 @@ LteSpectrumPhy::EndRxSlData ()
               
               if (params.m_rxPosX < 100000 && params.m_rxPosY < 100000 && params.m_txPosX < 100000 && params.m_txPosY < 100000)
                 {
-                  NS_LOG_DEBUG("Receive Time = " << params.m_timestamp << ", from TxId = " << params.m_rnti + 3);
-                  NS_LOG_DEBUG("Current Receiver Next Tx Time = " << m_nextTxTime << ", Current Receive Time = " << params.m_timestamp);
+                  //NS_LOG_DEBUG("Receive Time = " << params.m_timestamp << ", from TxId = " << params.m_rnti + 3);
+                  //NS_LOG_DEBUG("Current Receiver Next Tx Time = " << m_nextTxTime << ", Current Receive Time = " << params.m_timestamp);
                   m_slPscchReception (params);
+                }
+              else
+                {
+                  m_msgLastReception[params.m_rnti-1] = 0;
+                  m_consecutiveMiss[params.m_rnti-1] = 0;
                 }
             }
           else
             {
               m_msgLastReception[params.m_rnti-1] = 0;
+              //NS_LOG_DEBUG("[Out 150m] TxID = " << params.m_rnti + 3 << ", m_msgLastReception[params.m_rnti-1] = " << m_msgLastReception[params.m_rnti-1]);
+              m_consecutiveMiss[params.m_rnti-1] = 0;
               params.m_neighbor = 0;
             }
                   
@@ -2614,8 +2633,8 @@ LteSpectrumPhy::MoveSensingWindow(uint32_t sIdx, uint32_t scPeriod)
         m_rsrpMap[idx_sc][idx_sf%1000] = 0;
         m_decodingMap[idx_sc][idx_sf%1000] = false;
       }*/
-    m_rssiMap[idx_sc][sIdx] = -200;
-    m_rsrpMap[idx_sc][sIdx] = -200;
+    m_rssiMap[idx_sc][sIdx] = -1000;
+    m_rsrpMap[idx_sc][sIdx] = -1000;
     m_decodingMap[idx_sc][sIdx] = false;
   }
 }
@@ -2624,7 +2643,7 @@ void
 LteSpectrumPhy::SetNextTxTime(uint32_t txTime)
 {
   m_nextTxTime = txTime;
-  NS_LOG_DEBUG("Next Tx Time = " << txTime);
+  //NS_LOG_DEBUG("Next Tx Time = " << txTime);
 }
 
 void
@@ -2633,9 +2652,23 @@ LteSpectrumPhy::UpdateRssiRsrpMap (int sigIndex)
   NS_LOG_FUNCTION (this);
   uint16_t rbNum = 0;
   double rssiSum = 0.0;
-  double rssi = 0.0;
+  double rssi_dBm = -1000.0;
   double rsrpSum = 0.0;
-  double rsrp_dBm;
+  double rsrp_dBm = -1000.0;
+  if (Simulator::Now ().GetMilliSeconds () >= 50016 && !m_50ms)
+    {
+      uint32_t nSubChannel = std::ceil(50 / m_RbPerSubChannel);
+      for (uint32_t subChannel =0; subChannel < nSubChannel; subChannel++)
+        {
+          for (int subFrame = 0; subFrame < 1000; subFrame++)
+            {
+              m_rssiMap[subChannel][subFrame] = -1000;
+              m_rsrpMap[subChannel][subFrame] = -1000;
+              m_decodingMap[subChannel][subFrame] = false;
+            }
+        }
+      m_50ms = true;
+    }
       
   Values::const_iterator itIntN = m_slInterferencePerceived[sigIndex].ConstValuesBegin ();
   Values::const_iterator itPj = m_slSignalPerceived[sigIndex].ConstValuesBegin ();
@@ -2653,18 +2686,21 @@ LteSpectrumPhy::UpdateRssiRsrpMap (int sigIndex)
   int subChannel = std::ceil(m_slRxRbStartIdx / m_RbPerSubChannel);
   int64_t subFrame = Simulator::Now ().GetMilliSeconds () % 1000;
 
-  rssi = rssiSum / (double)rbNum;
-  m_rssiMap[subChannel][subFrame] = rssi;
+  rssi_dBm = 10 * log10 (1000 * (rssiSum / static_cast<double> (rbNum)));
+  if (rssi_dBm < -1000)
+    {
+      rssi_dBm = -1000;
+    }
+  m_rssiMap[subChannel][subFrame] = rssi_dBm;
 
   rsrp_dBm = 10 * log10 (1000 * (rsrpSum / static_cast<double> (rbNum)));
+  if (rsrp_dBm < -1000)
+    {
+      rsrp_dBm = -1000;
+    }
   m_rsrpMap[subChannel][subFrame] = rsrp_dBm;
 
   m_decodingMap[subChannel][subFrame] = m_isDecoded;
-  Ptr<LteUeNetDevice> lteDevice = DynamicCast<LteUeNetDevice> (m_device);
-  if (lteDevice->GetImsi () == 5)
-    {
-      NS_LOG_INFO("TxID = " << m_txID+3 << ", RX subChannel = " << subChannel <<", subFrame = " << subFrame);
-    }
 }
 
 /*void

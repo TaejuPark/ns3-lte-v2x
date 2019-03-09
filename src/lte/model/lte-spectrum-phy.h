@@ -841,9 +841,11 @@ private:
   std::vector<std::vector<uint32_t>> m_txFeedbackMap; // map for feedback information to transmit.
   std::vector<std::vector<uint32_t>> m_rxFeedbackMap; // map for received feedback information
   std::vector<uint32_t> m_msgLastReception;
+  std::vector<uint32_t> m_consecutiveMiss;
   uint32_t m_nextTxTime;
   bool m_isDecoded;
   uint32_t m_txID;
+  bool m_50ms;
 
   uint16_t m_cellId; ///< the cell ID
   

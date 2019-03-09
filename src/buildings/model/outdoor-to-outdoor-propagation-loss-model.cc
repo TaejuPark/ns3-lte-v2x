@@ -87,7 +87,8 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
   // Free space pathloss
   double loss = 0.0;
   // Frequency in GHz
-  double fc = m_frequency / 1e9;
+  //double fc = m_frequency / 1e9;
+  double fc = 5.9;
   // Distance between the two nodes in meter
   double dist = a->GetDistanceFrom (b);
 
@@ -156,7 +157,7 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
 
   //NS_LOG_DEBUG ("frequency carrier: " << fc);
   // This model is only valid to a minimum distance of 3 meters
-  plos = r - 1.0;
+  plos = r + 1.0;
   if (dist >= 3)
     {
       if (r <= plos)
@@ -164,12 +165,12 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
           // LOS
           if (dist <= d1)
             {
-              pl_b1 = 22.7 * std::log10 (dist) + 27.0 + 20.0 * std::log10 (fc) + los + los_shadow;
+              pl_b1 = 22.7 * std::log10 (dist) + 41.0 + 20.0 * std::log10 (fc) + los + los_shadow;
               NS_LOG_INFO ("Outdoor LOS (Distance = " << dist << "), shadow = " << los_shadow <<", WINNER B1 loss = " << pl_b1);
             }
           else
             {
-              pl_b1 = 40 * std::log10 (dist) + 7.56 - 17.3 * std::log10 (hbs1) - 17.3 * std::log10 (hms1) + 2.7 * std::log10 (fc) + los + los_shadow;
+              pl_b1 = 40 * std::log10 (dist) + 9.45 - 17.3 * std::log10 (hbs1) - 17.3 * std::log10 (hms1) + 2.7 * std::log10 (fc) + los + los_shadow;
               NS_LOG_INFO ("Outdoor LOS (Distance = " << dist << "), shadow = " << los_shadow <<", WINNER B1 loss = " << pl_b1);
             }
         }
@@ -184,7 +185,7 @@ OutdoorToOutdoorPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobilit
             }
           if ((fc >= 1.92)and (fc <= 2.17))
             {
-              // Frequency = 2 GHz for general scenarios
+              // Frequency = 2 GHz for General Scenario
               pl_b1 = (44.9 - 6.55 * std::log10 (hbs)) * std::log10 (dist) + 5.83 * std::log10 (hbs) + 14.78 + 34.97 * std::log10 (fc) + nlos + nlos_shadow;
               NS_LOG_INFO ("Outdoor NLOS (Distance = " << dist << "), shadow = " << nlos_shadow <<", WINNER B1 loss = " << pl_b1);
             }

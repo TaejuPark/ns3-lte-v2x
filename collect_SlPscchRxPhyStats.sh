@@ -43,35 +43,35 @@
 #cp ./v2x_TJ_100/SlPscchRxPhyStats.txt ../TJ_100.txt
 
 
-cp ./v2x_TJ_0_VP_10/SlPscchRxPhyStats.txt ../TJ_0_10pV.txt
-cp ./v2x_TJ_0_VP_20/SlPscchRxPhyStats.txt ../TJ_0_20pV.txt
-cp ./v2x_TJ_0_VP_30/SlPscchRxPhyStats.txt ../TJ_0_30pV.txt
-cp ./v2x_TJ_0_VP_40/SlPscchRxPhyStats.txt ../TJ_0_40pV.txt
-cp ./v2x_TJ_0_VP_50/SlPscchRxPhyStats.txt ../TJ_0_50pV.txt
-cp ./v2x_TJ_0_VP_60/SlPscchRxPhyStats.txt ../TJ_0_60pV.txt
-cp ./v2x_TJ_0_VP_70/SlPscchRxPhyStats.txt ../TJ_0_70pV.txt
-cp ./v2x_TJ_0_VP_80/SlPscchRxPhyStats.txt ../TJ_0_80pV.txt
-cp ./v2x_TJ_0_VP_90/SlPscchRxPhyStats.txt ../TJ_0_90pV.txt
-cp ./v2x_TJ_0_VP_100/SlPscchRxPhyStats.txt ../TJ_0_100pV.txt
+cp -f ./v2x_TJ_0_VP_10/SlPscchRxPhyStats.txt ../TJ_0_10pV.txt
+cp -f ./v2x_TJ_0_VP_20/SlPscchRxPhyStats.txt ../TJ_0_20pV.txt
+cp -f ./v2x_TJ_0_VP_30/SlPscchRxPhyStats.txt ../TJ_0_30pV.txt
+cp -f ./v2x_TJ_0_VP_40/SlPscchRxPhyStats.txt ../TJ_0_40pV.txt
+cp -f ./v2x_TJ_0_VP_50/SlPscchRxPhyStats.txt ../TJ_0_50pV.txt
+cp -f ./v2x_TJ_0_VP_60/SlPscchRxPhyStats.txt ../TJ_0_60pV.txt
+cp -f ./v2x_TJ_0_VP_70/SlPscchRxPhyStats.txt ../TJ_0_70pV.txt
+cp -f ./v2x_TJ_0_VP_80/SlPscchRxPhyStats.txt ../TJ_0_80pV.txt
+cp -f ./v2x_TJ_0_VP_90/SlPscchRxPhyStats.txt ../TJ_0_90pV.txt
+cp -f ./v2x_TJ_0_VP_100/SlPscchRxPhyStats.txt ../TJ_0_100pV.txt
 
-cp ./v2x_TJ_50_VP_10/SlPscchRxPhyStats.txt ../TJ_50_10pV.txt
-cp ./v2x_TJ_50_VP_20/SlPscchRxPhyStats.txt ../TJ_50_20pV.txt
-cp ./v2x_TJ_50_VP_30/SlPscchRxPhyStats.txt ../TJ_50_30pV.txt
-cp ./v2x_TJ_50_VP_40/SlPscchRxPhyStats.txt ../TJ_50_40pV.txt
-cp ./v2x_TJ_50_VP_50/SlPscchRxPhyStats.txt ../TJ_50_50pV.txt
-cp ./v2x_TJ_50_VP_60/SlPscchRxPhyStats.txt ../TJ_50_60pV.txt
-cp ./v2x_TJ_50_VP_70/SlPscchRxPhyStats.txt ../TJ_50_70pV.txt
-cp ./v2x_TJ_50_VP_80/SlPscchRxPhyStats.txt ../TJ_50_80pV.txt
-cp ./v2x_TJ_50_VP_90/SlPscchRxPhyStats.txt ../TJ_50_90pV.txt
-cp ./v2x_TJ_50_VP_100/SlPscchRxPhyStats.txt ../TJ_50_100pV.txt
+cp -f ./v2x_TJ_50_VP_10/SlPscchRxPhyStats.txt ../TJ_50_10pV.txt
+cp -f ./v2x_TJ_50_VP_20/SlPscchRxPhyStats.txt ../TJ_50_20pV.txt
+cp -f ./v2x_TJ_50_VP_30/SlPscchRxPhyStats.txt ../TJ_50_30pV.txt
+cp -f ./v2x_TJ_50_VP_40/SlPscchRxPhyStats.txt ../TJ_50_40pV.txt
+cp -f ./v2x_TJ_50_VP_50/SlPscchRxPhyStats.txt ../TJ_50_50pV.txt
+cp -f ./v2x_TJ_50_VP_60/SlPscchRxPhyStats.txt ../TJ_50_60pV.txt
+cp -f ./v2x_TJ_50_VP_70/SlPscchRxPhyStats.txt ../TJ_50_70pV.txt
+cp -f ./v2x_TJ_50_VP_80/SlPscchRxPhyStats.txt ../TJ_50_80pV.txt
+cp -f ./v2x_TJ_50_VP_90/SlPscchRxPhyStats.txt ../TJ_50_90pV.txt
+cp -f ./v2x_TJ_50_VP_100/SlPscchRxPhyStats.txt ../TJ_50_100pV.txt
 
-cp ./v2x_TJ_100_VP_10/SlPscchRxPhyStats.txt ../TJ_100_10pV.txt
-cp ./v2x_TJ_100_VP_20/SlPscchRxPhyStats.txt ../TJ_100_20pV.txt
-cp ./v2x_TJ_100_VP_30/SlPscchRxPhyStats.txt ../TJ_100_30pV.txt
-cp ./v2x_TJ_100_VP_40/SlPscchRxPhyStats.txt ../TJ_100_40pV.txt
-cp ./v2x_TJ_100_VP_50/SlPscchRxPhyStats.txt ../TJ_100_50pV.txt
-cp ./v2x_TJ_100_VP_60/SlPscchRxPhyStats.txt ../TJ_100_60pV.txt
-cp ./v2x_TJ_100_VP_70/SlPscchRxPhyStats.txt ../TJ_100_70pV.txt
-cp ./v2x_TJ_100_VP_80/SlPscchRxPhyStats.txt ../TJ_100_80pV.txt
-cp ./v2x_TJ_100_VP_90/SlPscchRxPhyStats.txt ../TJ_100_90pV.txt
-cp ./v2x_TJ_100_VP_100/SlPscchRxPhyStats.txt ../TJ_100_100pV.txt
+cp -f ./v2x_TJ_100_VP_10/SlPscchRxPhyStats.txt ../TJ_100_10pV.txt
+cp -f ./v2x_TJ_100_VP_20/SlPscchRxPhyStats.txt ../TJ_100_20pV.txt
+cp -f ./v2x_TJ_100_VP_30/SlPscchRxPhyStats.txt ../TJ_100_30pV.txt
+cp -f ./v2x_TJ_100_VP_40/SlPscchRxPhyStats.txt ../TJ_100_40pV.txt
+cp -f ./v2x_TJ_100_VP_50/SlPscchRxPhyStats.txt ../TJ_100_50pV.txt
+cp -f ./v2x_TJ_100_VP_60/SlPscchRxPhyStats.txt ../TJ_100_60pV.txt
+cp -f ./v2x_TJ_100_VP_70/SlPscchRxPhyStats.txt ../TJ_100_70pV.txt
+cp -f ./v2x_TJ_100_VP_80/SlPscchRxPhyStats.txt ../TJ_100_80pV.txt
+cp -f ./v2x_TJ_100_VP_90/SlPscchRxPhyStats.txt ../TJ_100_90pV.txt
+cp -f ./v2x_TJ_100_VP_100/SlPscchRxPhyStats.txt ../TJ_100_100pV.txt
